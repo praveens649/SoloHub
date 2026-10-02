@@ -1,7 +1,85 @@
 import type { GitHubRepository } from "./types";
 const GITHUB_API = "https://api.github.com";
+export interface GitHubSearchResult<T> {
+  total_count: number;
+  incomplete_results: boolean;
+  items: T[];
+}
 
+export interface GitHubPullRequest {
+  id: number;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  merged_at: string | null;
+  created_at: string;
+  updated_at: string;
+  repository_url: string;
+  html_url: string;
+}
 
+export interface GitHubIssue {
+  id: number;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  created_at: string;
+  closed_at: string | null;
+  repository_url: string;
+  html_url: string;
+}
+export interface GitHubCommit {
+  sha: string;
+  commit: {
+    message: string;
+    author: {
+      name: string;
+      date: string;
+    } | null;
+  };
+  repository?: {
+    name: string;
+  };
+}
+export interface GitHubEvent {
+  id: string;
+  type: string;
+  created_at: string;
+  repo: {
+    name: string;
+  };
+  payload: {
+    action?: string;
+    ref?: string;
+    commits?: Array<{
+      sha: string;
+      message: string;
+    }>;
+  };
+}
+export async function getRepositoryCommits(
+  token: string,
+  owner: string,
+  repo: string,
+  since: string,
+  until: string
+): Promise<GitHubCommit[]> {
+  return githubFetch<GitHubCommit[]>(
+    `/repos/${owner}/${repo}/commits?since=${encodeURIComponent(
+      since
+    )}&until=${encodeURIComponent(until)}&per_page=100`,
+    token
+  );
+}
+export async function getUserActivity(
+  token: string,
+  username: string
+): Promise<GitHubEvent[]> {
+  return githubFetch<GitHubEvent[]>(
+    `/users/${username}/events?per_page=100`,
+    token
+  );
+}
 export async function getRepositories(
   token: string,
   starred = false
@@ -45,4 +123,13 @@ export async function getGitHubUser(token: string) {
     avatar_url: string;
     html_url: string;
   }>("/user", token);
+}
+export async function searchGitHub<T>(
+  token: string,
+  query: string
+): Promise<GitHubSearchResult<T>> {
+  return githubFetch<GitHubSearchResult<T>>(
+    `/search/issues?q=${encodeURIComponent(query)}&per_page=100`,
+    token
+  );
 }

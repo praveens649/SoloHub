@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { GitHubConnect } from "./components/GitHubConnect";
 import { getAuth, clearAuth } from "../lib/storage/auth";
 import { getGitHubUser } from "../lib/github/client";
-import { RepositoryList } from "./components/RepositoryList";
-import type { Filter } from "./components/RepositoryList";
-import { useRepositories } from "./hooks/useRepositories";
+import { TodayProductivity } from "./components/TodayProductivity";
+import { WeeklyActivity } from "./components/WeeklyActivity";
+import { RepositorySection } from "./components/RepositorySection";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -74,56 +74,25 @@ function App() {
 }
 
 function Dashboard({ username }: { username: string | null }) {
-  const [filter, setFilter] = useState<Filter>("all");
-  const {
-    data: repositories,
-    isLoading,
-    isError,
-  } = useRepositories(filter === "starred");
-
   return (
-    <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white">
-      <header className="border-b border-zinc-800 px-4 py-3">
+    <main className="h-[600px] w-[380px] overflow-y-auto bg-zinc-950 p-4 text-white">
+      <header className="mb-5">
         <h1 className="text-lg font-semibold">
           Solohub
         </h1>
 
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-zinc-500">
           {username ? `Signed in as ${username}` : "GitHub Productivity"}
         </p>
       </header>
 
-      <section className="p-4">
-        <div className="mb-4">
-          <p className="text-xs text-zinc-500">
-            Repositories
-          </p>
+      <div className="space-y-5">
+        <TodayProductivity />
 
-          <h2 className="text-lg font-semibold">
-            Your Repositories
-          </h2>
-        </div>
+        <WeeklyActivity />
 
-        {isLoading && (
-          <p className="text-sm text-zinc-500">
-            Loading repositories...
-          </p>
-        )}
-
-        {isError && (
-          <p className="text-sm text-red-400">
-            Failed to load repositories.
-          </p>
-        )}
-
-        {repositories && (
-          <RepositoryList
-            repositories={repositories}
-            filter={filter}
-            onFilterChange={setFilter}
-          />
-        )}
-      </section>
+        <RepositorySection />
+      </div>
     </main>
   );
 }
