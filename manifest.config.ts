@@ -10,7 +10,10 @@ export default defineManifest({
   description:
     "A productivity GitHub control center for solo developers.",
 
-  permissions: ["storage"],
+  permissions: ["storage","identity"],
+  host_permissions: [
+  "http://localhost:3001/*",
+],
 
   action: {
     default_popup: "index.html",

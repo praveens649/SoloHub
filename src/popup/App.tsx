@@ -1,27 +1,59 @@
+import { useEffect, useState } from "react";
+import { GitHubConnect } from "./components/GitHubConnect";
+import { getAuth } from "../lib/storage/auth";
+
 function App() {
-  return (
-    <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white">
-      <header className="border-b border-zinc-800 px-4 py-3">
-        <h1 className="text-lg font-semibold">
-          Solohub
-        </h1>
+  const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
 
-        <p className="text-xs text-zinc-400">
-          A Productivity GitHub control center for solo developers.
-        </p>
-      </header>
+  useEffect(() => {
+    async function checkAuth() {
+      const auth = await getAuth();
 
-      <section className="p-4">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-sm text-zinc-400">
-            Extension initialized
+      setAuthenticated(Boolean(auth));
+      setLoading(false);
+    }
+
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white p-4">
+        Loading...
+      </main>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white">
+        <header className="border-b border-zinc-800 px-4 py-3">
+          <h1 className="text-lg font-semibold">
+            Solohub
+          </h1>
+
+          <p className="text-xs text-zinc-400">
+            GitHub Productivity
           </p>
+        </header>
 
-          <h2 className="mt-1 text-xl font-semibold">
-            Ready to build.
-          </h2>
-        </div>
-      </section>
+        <section className="p-4">
+          <GitHubConnect />
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white p-4">
+      <h1 className="text-lg font-semibold">
+        Solohub Dashboard
+      </h1>
+
+      <p className="text-sm text-zinc-400 mt-1">
+        GitHub connected shiiiiiii
+      </p>
     </main>
   );
 }
