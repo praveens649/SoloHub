@@ -2,36 +2,34 @@ import { useState } from "react";
 import { loginWithGitHub } from "../../lib/github/auth";
 import { getGitHubUser } from "../../lib/github/client";
 import { setAuth } from "../../lib/storage/auth";
+
 export function GitHubConnect() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleConnect() {
     try {
-  setLoading(true);
-  setError(null);
+      setLoading(true);
+      setError(null);
 
-  
+      const token = await loginWithGitHub();
 
-const token = await loginWithGitHub();
+      const user = await getGitHubUser(token);
 
-const user = await getGitHubUser(token);
+      await setAuth(token, user);
 
-await setAuth(token, user);
+      console.log("Authenticated:", user);
+    } catch (err) {
+      console.error(err);
 
-console.log("Authenticated:", user);
-
-} catch (err) {
-  console.error(err);
-
-  setError(
-    err instanceof Error
-      ? err.message
-      : "GitHub authentication failed"
-  );
-} finally {
-  setLoading(false);
-}
+      setError(
+        err instanceof Error
+          ? err.message
+          : "GitHub authentication failed"
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

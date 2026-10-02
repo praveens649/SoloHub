@@ -1,8 +1,9 @@
+
 import type { GitHubUser } from "../github/types";
 
 const AUTH_STORAGE_KEY = "github_auth";
 
-interface StoredAuth {
+export interface StoredAuth {
   token: string;
   user: GitHubUser;
 }
@@ -18,7 +19,7 @@ export async function getAuth(): Promise<StoredAuth | null> {
 export async function setAuth(
   token: string,
   user: GitHubUser
-) {
+): Promise<void> {
   await chrome.storage.local.set({
     [AUTH_STORAGE_KEY]: {
       token,
@@ -27,6 +28,6 @@ export async function setAuth(
   });
 }
 
-export async function clearAuth() {
+export async function clearAuth(): Promise<void> {
   await chrome.storage.local.remove(AUTH_STORAGE_KEY);
 }

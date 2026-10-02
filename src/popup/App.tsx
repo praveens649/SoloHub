@@ -1,26 +1,48 @@
 import { useEffect, useState } from "react";
 import { GitHubConnect } from "./components/GitHubConnect";
-import { getAuth } from "../lib/storage/auth";
-
+import { getAuth, clearAuth } from "../lib/storage/auth";
+import { getGitHubUser } from "../lib/github/client";
+import { RepositoryTest } from "./components/RepositoryTest";
 function App() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    async function checkAuth() {
-      const auth = await getAuth();
+    async function initializeAuth() {
+      try {
+        const auth = await getAuth();
 
-      setAuthenticated(Boolean(auth));
-      setLoading(false);
+        if (!auth?.token) {
+          setAuthenticated(false);
+          return;
+        }
+
+        // Validate stored token
+        const user = await getGitHubUser(auth.token);
+
+        setAuthenticated(true);
+        setUsername(user.login);
+      } catch (error) {
+        console.error("Auth validation failed:", error);
+
+        await clearAuth();
+
+        setAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    checkAuth();
+    initializeAuth();
   }, []);
 
   if (loading) {
     return (
-      <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white p-4">
-        Loading...
+      <main className="min-h-[500px] w-[380px] bg-zinc-950 p-4 text-white">
+        <p className="text-sm text-zinc-400">
+          Checking GitHub connection...
+        </p>
       </main>
     );
   }
@@ -46,14 +68,29 @@ function App() {
   }
 
   return (
-    <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white p-4">
-      <h1 className="text-lg font-semibold">
-        Solohub Dashboard
-      </h1>
+    <main className="min-h-[500px] w-[380px] bg-zinc-950 text-white">
+      <header className="border-b border-zinc-800 px-4 py-3">
+        <h1 className="text-lg font-semibold">
+          Solohub
+        </h1>
 
-      <p className="text-sm text-zinc-400 mt-1">
-        GitHub connected shiiiiiii
-      </p>
+        <p className="text-xs text-zinc-400">
+          GitHub Productivity
+        </p>
+      </header>
+
+      <section className="p-4">
+        <p className="text-sm text-zinc-400">
+          GitHub connected
+        </p>
+
+        <h2 className="mt-1 text-lg font-semibold">
+          @{username}
+        </h2>
+         <div className="mt-4">
+    <RepositoryTest />
+  </div>
+      </section>
     </main>
   );
 }
