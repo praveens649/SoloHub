@@ -3,10 +3,13 @@ const GITHUB_API = "https://api.github.com";
 
 
 export async function getRepositories(
-  token: string
+  token: string,
+  starred = false
 ): Promise<GitHubRepository[]> {
   return githubFetch<GitHubRepository[]>(
-    "/user/repos?sort=updated&direction=desc&per_page=100",
+    starred
+      ? "/user/starred?sort=updated&direction=desc&per_page=100"
+      : "/user/repos?sort=updated&direction=desc&per_page=100",
     token
   );
 }
