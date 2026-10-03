@@ -7,12 +7,16 @@ import {
   Globe,
   Lock,
   Plus,
+  Users,
 } from "lucide-react";
 import { useCreateRepository } from "../hooks/useRepositories";
+import { CollaboratorSection } from "./CollaboratorSection";
 import type { GitHubRepository } from "../../lib/github/types";
 
+type QuickActionMode = "none" | "create-repo" | "manage-access";
+
 export function QuickActions() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<QuickActionMode>("none");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -39,7 +43,7 @@ export function QuickActions() {
 
   function handleClose() {
     resetForm();
-    setIsOpen(false);
+    setMode("none");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -104,33 +108,58 @@ export function QuickActions() {
       </div>
 
       {/* Default View: Action Cards */}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/80 text-white">
-              <FolderPlus size={16} />
+      {mode === "none" && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setMode("create-repo")}
+            className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/80 text-white">
+                <FolderPlus size={16} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-white">
+                  Create Repository
+                </p>
+                <p className="text-[11px] text-zinc-400">
+                  Create a new GitHub repo
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-xs font-semibold text-white">
-                Create Repository
-              </p>
-              <p className="text-[11px] text-zinc-400">
-                Create a new GitHub repository
-              </p>
-            </div>
-          </div>
+            <Plus size={14} className="text-zinc-500" />
+          </button>
 
-          <Plus size={14} className="text-zinc-500" />
-        </button>
+          <button
+            type="button"
+            onClick={() => setMode("manage-access")}
+            className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/80 text-white">
+                <Users size={16} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-white">
+                  Manage Access
+                </p>
+                <p className="text-[11px] text-zinc-400">
+                  Manage repository collaborators
+                </p>
+              </div>
+            </div>
+
+            <Plus size={14} className="text-zinc-500" />
+          </button>
+        </div>
       )}
 
       {/* Success View */}
-      {isOpen && createdRepo && (
+      {mode === "create-repo" && createdRepo && (
         <div className="space-y-3 rounded-lg border border-emerald-900/60 bg-emerald-950/20 p-3">
           <div className="flex items-start justify-between">
             <div>
@@ -232,7 +261,7 @@ export function QuickActions() {
       )}
 
       {/* Creation Form View */}
-      {isOpen && !createdRepo && (
+      {mode === "create-repo" && !createdRepo && (
         <form
           onSubmit={handleSubmit}
           className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3"
@@ -366,6 +395,11 @@ export function QuickActions() {
             </button>
           </div>
         </form>
+      )}
+
+      {/* Manage Access View */}
+      {mode === "manage-access" && (
+        <CollaboratorSection onClose={handleClose} />
       )}
     </section>
   );

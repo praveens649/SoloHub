@@ -29,3 +29,43 @@ export interface GitHubRepository {
     avatar_url: string;
   };
 }
+
+export type CollaboratorPermission =
+  | "pull"
+  | "triage"
+  | "push"
+  | "maintain"
+  | "admin";
+
+export interface GitHubCollaborator {
+  id: number;
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  permissions?: {
+    admin?: boolean;
+    maintain?: boolean;
+    push?: boolean;
+    triage?: boolean;
+    pull?: boolean;
+  };
+  role_name?: string;
+}
+
+export interface GitHubCollaboratorInvitation {
+  id: number;
+  repository?: {
+    name: string;
+    full_name: string;
+  };
+  invitee?: {
+    login: string;
+    avatar_url: string;
+  };
+  inviter?: {
+    login: string;
+  };
+  permissions?: string;
+  created_at?: string;
+  html_url?: string;
+}

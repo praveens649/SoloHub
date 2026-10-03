@@ -1,4 +1,9 @@
-import type { GitHubRepository } from "./types";
+import type {
+  CollaboratorPermission,
+  GitHubCollaborator,
+  GitHubCollaboratorInvitation,
+  GitHubRepository,
+} from "./types";
 const GITHUB_API = "https://api.github.com";
 export interface GitHubSearchResult<T> {
   total_count: number;
@@ -166,7 +171,10 @@ export async function githubFetch<T>(
     throw new Error(errorMessage);
   }
 
-  if (response.status === 204) {
+  if (
+    response.status === 204 ||
+    response.headers.get("content-length") === "0"
+  ) {
     return null as T;
   }
 
@@ -338,6 +346,60 @@ export async function createRepository(
         private: Boolean(params.private),
         auto_init: Boolean(params.autoInit),
       }),
+    }
+  );
+}
+
+export async function getRepositoryCollaborators(
+  token: string,
+  owner: string,
+  repo: string
+): Promise<GitHubCollaborator[]> {
+  return githubFetch<GitHubCollaborator[]>(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/collaborators?per_page=100`,
+    token
+  );
+}
+
+export async function addRepositoryCollaborator(
+  token: string,
+  owner: string,
+  repo: string,
+  username: string,
+  permission: CollaboratorPermission = "push"
+): Promise<GitHubCollaboratorInvitation | null> {
+  return githubFetch<GitHubCollaboratorInvitation | null>(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/collaborators/${encodeURIComponent(username)}`,
+    token,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        permission,
+      }),
+    }
+  );
+}
+
+export async function removeRepositoryCollaborator(
+  token: string,
+  owner: string,
+  repo: string,
+  username: string
+): Promise<void> {
+  await githubFetch<void>(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/collaborators/${encodeURIComponent(username)}`,
+    token,
+    {
+      method: "DELETE",
     }
   );
 }
