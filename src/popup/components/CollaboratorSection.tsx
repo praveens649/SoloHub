@@ -21,6 +21,7 @@ import type {
   GitHubCollaborator,
   GitHubRepository,
 } from "../../lib/github/types";
+import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
 
 interface CollaboratorSectionProps {
   onClose?: () => void;
@@ -59,34 +60,27 @@ function formatCollaboratorError(
   err: unknown,
   defaultMessage: string
 ): string {
-  if (!(err instanceof Error)) return defaultMessage;
-  const msg = err.message.toLowerCase();
-
-  if (
-    msg.includes("403") ||
-    msg.includes("permission") ||
-    msg.includes("must have admin rights") ||
-    msg.includes("must have push access")
-  ) {
-    return "You don't have permission to manage access for this repository.";
-  }
-  if (msg.includes("404") || msg.includes("not found")) {
-    return "Repository or user not found.";
-  }
-  if (
-    msg.includes("already a collaborator") ||
-    msg.includes("already been invited")
-  ) {
-    return "User is already a collaborator or has a pending invitation.";
-  }
-  if (msg.includes("rate limit")) {
-    return "GitHub rate limit reached.";
-  }
-  if (msg.includes("network") || msg.includes("failed to fetch")) {
-    return "Network error. Please try again.";
+  if (err instanceof GitHubApiError) {
+    if (err.isRateLimit) {
+      return err.getFriendlyMessage();
+    }
+    if (err.status === 403) {
+      return "You don't have permission to manage access for this repository.";
+    }
+    if (err.status === 404) {
+      return "Repository or user not found.";
+    }
+    const lower = err.message.toLowerCase();
+    if (
+      lower.includes("already a collaborator") ||
+      lower.includes("already been invited")
+    ) {
+      return "User is already a collaborator or has a pending invitation.";
+    }
+    return err.getFriendlyMessage();
   }
 
-  return err.message || defaultMessage;
+  return formatGitHubError(err, defaultMessage);
 }
 
 export function CollaboratorSection({

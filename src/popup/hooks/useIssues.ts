@@ -10,7 +10,7 @@ import {
 
 export function useIssues(state: "open" | "closed" = "open") {
   return useQuery<GitHubIssue[]>({
-    queryKey: ["issues", { state }],
+    queryKey: ["issues", state],
     queryFn: async () => {
       const auth = await getAuth();
 

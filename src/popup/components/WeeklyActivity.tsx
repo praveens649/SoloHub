@@ -1,4 +1,5 @@
 import { useWeeklyProductivity } from "../hooks/useWeeklyProductivity";
+import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
 
 function formatDay(date: string) {
   return new Date(date).toLocaleDateString(
@@ -14,9 +15,11 @@ export function WeeklyActivity() {
     data,
     isLoading,
     isError,
+    error,
+    refetch,
   } = useWeeklyProductivity();
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <p className="text-xs text-zinc-500">
@@ -26,14 +29,14 @@ export function WeeklyActivity() {
     );
   }
 
-  if (isError || !data) {
+  if (isError && !data) {
     return (
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <p className="text-xs text-red-400">
-          Failed to load weekly activity.
-        </p>
-      </div>
+      <GitHubRateLimitMessage error={error} onRetry={() => refetch()} />
     );
+  }
+
+  if (!data) {
+    return null;
   }
 
   const maxCommits = Math.max(

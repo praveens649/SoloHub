@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { GitHubConnect } from "./components/GitHubConnect";
 import { getAuth, setAuth, clearAuth } from "../lib/storage/auth";
-import { getGitHubUser } from "../lib/github/client";
+import { getGitHubUser, GitHubApiError } from "../lib/github/client";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TodayProductivity } from "./components/TodayProductivity";
 import { ActionCenter } from "./components/ActionCenter";
@@ -26,6 +26,11 @@ function App() {
           return;
         }
 
+        if (auth.user) {
+          setAuthenticated(true);
+          setUsername(auth.user.login);
+        }
+
         // Validate stored token
         const user = await getGitHubUser(auth.token);
         await setAuth(auth.token, user);
@@ -35,9 +40,20 @@ function App() {
       } catch (error) {
         console.error("Auth validation failed:", error);
 
-        await clearAuth();
-
-        setAuthenticated(false);
+        // Only clear stored authentication on explicit 401 Unauthorized
+        if (error instanceof GitHubApiError && error.status === 401) {
+          await clearAuth();
+          setAuthenticated(false);
+        } else {
+          // If offline / network error or temporary failure, preserve existing credentials
+          const auth = await getAuth();
+          if (auth?.token && auth?.user) {
+            setAuthenticated(true);
+            setUsername(auth.user.login);
+          } else {
+            setAuthenticated(false);
+          }
+        }
       } finally {
         setLoading(false);
       }

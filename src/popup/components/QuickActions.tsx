@@ -12,6 +12,7 @@ import {
 import { useCreateRepository } from "../hooks/useRepositories";
 import { CollaboratorSection } from "./CollaboratorSection";
 import type { GitHubRepository } from "../../lib/github/types";
+import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
 
 type QuickActionMode = "none" | "create-repo" | "manage-access";
 
@@ -68,16 +69,22 @@ export function QuickActions() {
 
       setCreatedRepo(repo);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to create repository.";
-
-      if (message.toLowerCase().includes("already exists")) {
-        setApiError("Repository name already exists.");
-      } else if (message.toLowerCase().includes("rate limit")) {
-        setApiError("GitHub rate limit reached.");
-      } else {
-        setApiError(message);
+      if (err instanceof GitHubApiError) {
+        if (err.isRateLimit) {
+          setApiError(err.getFriendlyMessage());
+          return;
+        }
+        if (
+          err.status === 422 ||
+          err.message.toLowerCase().includes("already exists")
+        ) {
+          setApiError("Repository name already exists.");
+          return;
+        }
+        setApiError(err.getFriendlyMessage());
+        return;
       }
+      setApiError(formatGitHubError(err, "Unable to create repository."));
     }
   }
 

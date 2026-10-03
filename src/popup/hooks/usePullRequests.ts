@@ -9,7 +9,7 @@ import {
 
 export function usePullRequests(state: "open" | "closed" = "open") {
   return useQuery<GitHubPullRequest[]>({
-    queryKey: ["pullRequests", { state }],
+    queryKey: ["pullRequests", state],
     queryFn: async () => {
       const auth = await getAuth();
 

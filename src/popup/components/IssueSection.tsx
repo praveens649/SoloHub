@@ -3,12 +3,19 @@ import { Plus } from "lucide-react";
 import { useIssues } from "../hooks/useIssues";
 import { IssueCard } from "./IssueCard";
 import { NewIssueForm } from "./NewIssueForm";
+import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
 
 export function IssueSection() {
   const [filter, setFilter] = useState<"open" | "closed">("open");
   const [showNewForm, setShowNewForm] = useState(false);
 
-  const { data: issues, isLoading, isError } = useIssues(filter);
+  const {
+    data: issues,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useIssues(filter);
 
   return (
     <section>
@@ -59,19 +66,17 @@ export function IssueSection() {
       )}
 
       {/* Status states */}
-      {isLoading && (
+      {isLoading && !issues && (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
           <p className="text-xs text-zinc-500">Loading issues...</p>
         </div>
       )}
 
-      {isError && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-red-400">Failed to load issues.</p>
-        </div>
+      {isError && !issues && (
+        <GitHubRateLimitMessage error={error} onRetry={() => refetch()} />
       )}
 
-      {!isLoading && !isError && issues && (
+      {issues && (
         <div className="space-y-2">
           {issues.length === 0 ? (
             <div className="rounded-lg border border-dashed border-zinc-800 p-6 text-center">

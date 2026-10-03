@@ -4,6 +4,13 @@ import type {
   GitHubCollaboratorInvitation,
   GitHubRepository,
 } from "./types";
+import {
+  GitHubApiError,
+  GitHubNetworkError,
+  formatGitHubError,
+} from "./errors";
+
+export { GitHubApiError, GitHubNetworkError, formatGitHubError };
 const GITHUB_API = "https://api.github.com";
 export interface GitHubSearchResult<T> {
   total_count: number;
@@ -132,43 +139,131 @@ export async function getUserActivity(
     token
   );
 }
+export interface PaginatedResult<T> {
+  data: T[];
+  hasMore: boolean;
+}
+
+export async function fetchPaginated<T>(
+  endpoint: string,
+  token: string,
+  options: {
+    perPage?: number;
+    maxPages?: number;
+    fetchOptions?: RequestInit;
+  } = {}
+): Promise<PaginatedResult<T>> {
+  const perPage = options.perPage ?? 100;
+  const maxPages = options.maxPages ?? 2;
+  const allItems: T[] = [];
+  let page = 1;
+  let hasMore = false;
+
+  const separator = endpoint.includes("?") ? "&" : "?";
+
+  while (page <= maxPages) {
+    const pageUrl = `${endpoint}${separator}page=${page}&per_page=${perPage}`;
+
+    const items = await githubFetch<T[]>(pageUrl, token, options.fetchOptions);
+    if (!Array.isArray(items) || items.length === 0) {
+      break;
+    }
+
+    allItems.push(...items);
+
+    if (items.length < perPage) {
+      hasMore = false;
+      break;
+    }
+
+    if (page === maxPages) {
+      hasMore = true;
+    }
+
+    page++;
+  }
+
+  return { data: allItems, hasMore };
+}
+
 export async function getRepositories(
   token: string,
-  starred = false
+  starred = false,
+  maxPages = 2
 ): Promise<GitHubRepository[]> {
-  return githubFetch<GitHubRepository[]>(
-    starred
-      ? "/user/starred?sort=updated&direction=desc&per_page=100"
-      : "/user/repos?sort=updated&direction=desc&per_page=100",
-    token
-  );
+  const endpoint = starred
+    ? "/user/starred?sort=updated&direction=desc"
+    : "/user/repos?sort=updated&direction=desc";
+
+  const { data } = await fetchPaginated<GitHubRepository>(endpoint, token, {
+    perPage: 100,
+    maxPages,
+  });
+
+  return data;
 }
+
 export async function githubFetch<T>(
   endpoint: string,
   token: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${GITHUB_API}${endpoint}`, {
-    ...options,
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-      ...options.headers,
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${GITHUB_API}${endpoint}`, {
+      ...options,
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...options.headers,
+      },
+    });
+  } catch (err) {
+    if (
+      err instanceof TypeError ||
+      (err instanceof Error && err.name === "TypeError")
+    ) {
+      throw new GitHubNetworkError();
+    }
+    throw err;
+  }
+
+  const limitHeader = response.headers.get("x-ratelimit-limit");
+  const remainingHeader = response.headers.get("x-ratelimit-remaining");
+  const resetHeader = response.headers.get("x-ratelimit-reset");
+
+  const rateLimitLimit = limitHeader ? parseInt(limitHeader, 10) : null;
+  const rateLimitRemaining = remainingHeader
+    ? parseInt(remainingHeader, 10)
+    : null;
+  const rateLimitReset = resetHeader ? parseInt(resetHeader, 10) : null;
 
   if (!response.ok) {
     let errorMessage = `GitHub API error: ${response.status} ${response.statusText}`;
+    let documentationUrl: string | null = null;
+
     try {
       const errorData = await response.json();
       if (errorData?.message) {
         errorMessage = errorData.message;
       }
+      if (errorData?.documentation_url) {
+        documentationUrl = errorData.documentation_url;
+      }
     } catch {
       // Ignore json parse error and keep default statusText
     }
-    throw new Error(errorMessage);
+
+    throw new GitHubApiError({
+      message: errorMessage,
+      status: response.status,
+      rateLimitLimit,
+      rateLimitRemaining,
+      rateLimitReset,
+      documentationUrl,
+    });
   }
 
   if (

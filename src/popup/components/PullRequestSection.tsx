@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { usePullRequests } from "../hooks/usePullRequests";
 import { PullRequestCard } from "./PullRequestCard";
+import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
 
 export function PullRequestSection() {
   const [filter, setFilter] = useState<"open" | "closed">("open");
-  const { data: pullRequests, isLoading, isError } = usePullRequests(filter);
+  const {
+    data: pullRequests,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = usePullRequests(filter);
 
   return (
     <section>
@@ -33,19 +40,17 @@ export function PullRequestSection() {
         </div>
       </div>
 
-      {isLoading && (
+      {isLoading && !pullRequests && (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
           <p className="text-xs text-zinc-500">Loading pull requests...</p>
         </div>
       )}
 
-      {isError && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-red-400">Failed to load pull requests.</p>
-        </div>
+      {isError && !pullRequests && (
+        <GitHubRateLimitMessage error={error} onRetry={() => refetch()} />
       )}
 
-      {!isLoading && !isError && pullRequests && (
+      {pullRequests && (
         <div className="space-y-2">
           {pullRequests.length === 0 ? (
             <div className="rounded-lg border border-dashed border-zinc-800 p-6 text-center">

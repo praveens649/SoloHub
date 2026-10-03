@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { usePullRequests, useMergePullRequest } from "../hooks/usePullRequests";
 import { useIssues, useUpdateIssueState } from "../hooks/useIssues";
+import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
 import type { GitHubIssue, GitHubPullRequest } from "../../lib/github/client";
 
 type ActionItem =
@@ -53,16 +54,21 @@ export function ActionCenter() {
     data: pullRequests,
     isLoading: prsLoading,
     isError: prsError,
+    error: prsErrorObj,
+    refetch: refetchPrs,
   } = usePullRequests("open");
 
   const {
     data: issues,
     isLoading: issuesLoading,
     isError: issuesError,
+    error: issuesErrorObj,
+    refetch: refetchIssues,
   } = useIssues("open");
 
-  const isLoading = prsLoading || issuesLoading;
-  const isError = prsError || issuesError;
+  const hasData = Boolean(pullRequests || issues);
+  const isLoading = (prsLoading && !pullRequests) || (issuesLoading && !issues);
+  const isError = (prsError && !pullRequests) || (issuesError && !issues);
 
   const items: ActionItem[] = useMemo(() => {
     const prItems: ActionItem[] = (pullRequests || [])
@@ -142,17 +148,21 @@ export function ActionCenter() {
       </div>
 
       {/* Loading state */}
-      {isLoading && (
+      {isLoading && !hasData && (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
           <p className="text-xs text-zinc-500">Loading actions...</p>
         </div>
       )}
 
       {/* Error state */}
-      {!isLoading && isError && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-red-400">Unable to load actions.</p>
-        </div>
+      {!isLoading && isError && !hasData && (
+        <GitHubRateLimitMessage
+          error={prsErrorObj || issuesErrorObj}
+          onRetry={() => {
+            refetchPrs();
+            refetchIssues();
+          }}
+        />
       )}
 
       {/* Empty state */}
@@ -163,7 +173,7 @@ export function ActionCenter() {
       )}
 
       {/* Action Item Cards */}
-      {!isLoading && !isError && filteredItems.length > 0 && (
+      {filteredItems.length > 0 && (
         <div className="space-y-2">
           {filteredItems.map((item) => (
             <ActionCenterItem key={item.id} item={item} />

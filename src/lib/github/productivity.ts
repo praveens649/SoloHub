@@ -31,6 +31,28 @@ function getLast7Days() {
   return days;
 }
 
+export async function mapConcurrent<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let currentIndex = 0;
+
+  async function worker() {
+    while (currentIndex < items.length) {
+      const index = currentIndex++;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  const workerCount = Math.min(limit, items.length);
+  const workers = Array.from({ length: workerCount }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 export async function getWeeklyProductivity(
   token: string,
   repositories: GitHubRepository[],
@@ -56,8 +78,18 @@ export async function getWeeklyProductivity(
     });
   }
 
-  const results = await Promise.all(
-    repositories.map(async (repository) => {
+  // Filter repositories that have been updated since 7 days ago (plus buffer)
+  // to avoid querying dozens of stale repositories
+  const relevantRepositories = repositories.filter((repo) => {
+    if (!repo.updated_at) return true;
+    const updatedAt = new Date(repo.updated_at);
+    return updatedAt.getTime() >= since.getTime() - 24 * 60 * 60 * 1000;
+  });
+
+  const results = await mapConcurrent(
+    relevantRepositories,
+    5,
+    async (repository) => {
       try {
         const commits = await getRepositoryCommits(
           token,
@@ -78,7 +110,7 @@ export async function getWeeklyProductivity(
           commits: [],
         };
       }
-    })
+    }
   );
 
   for (const result of results) {

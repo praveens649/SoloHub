@@ -6,20 +6,25 @@ import {
 } from "lucide-react";
 import { useTodayWork } from "../hooks/useTodayWork";
 import { useTodayProductivity } from "../hooks/useTodayProductivity";
+import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
 
 export function TodayProductivity() {
   const {
     data,
     isLoading,
     isError,
+    error,
+    refetch,
   } = useTodayWork();
   const {
     data: productivity,
     isLoading: productivityLoading,
     isError: productivityError,
+    error: productivityErrorObj,
+    refetch: refetchProductivity,
   } = useTodayProductivity();
 
-  if (isLoading || productivityLoading) {
+  if ((isLoading && !data) || (productivityLoading && !productivity)) {
     return (
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <p className="text-xs text-zinc-500">
@@ -29,13 +34,15 @@ export function TodayProductivity() {
     );
   }
 
-  if (isError || productivityError || !data || !productivity) {
+  if ((isError || productivityError) && (!data || !productivity)) {
     return (
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <p className="text-xs text-red-400">
-          Failed to load today's activity.
-        </p>
-      </div>
+      <GitHubRateLimitMessage
+        error={productivityErrorObj || error}
+        onRetry={() => {
+          refetch();
+          refetchProductivity();
+        }}
+      />
     );
   }
 

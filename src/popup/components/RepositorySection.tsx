@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RepositoryList } from "./RepositoryList";
 import type { Filter } from "./RepositoryList";
 import { useRepositories } from "../hooks/useRepositories";
+import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
 
 export function RepositorySection() {
   const [filter, setFilter] = useState<Filter>("all");
@@ -9,6 +10,8 @@ export function RepositorySection() {
     data: repositories,
     isLoading,
     isError,
+    error,
+    refetch,
   } = useRepositories(filter === "starred");
 
   return (
@@ -23,7 +26,7 @@ export function RepositorySection() {
         </h2>
       </div>
 
-      {isLoading && (
+      {isLoading && !repositories && (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
           <p className="text-xs text-zinc-500">
             Loading repositories...
@@ -31,12 +34,8 @@ export function RepositorySection() {
         </div>
       )}
 
-      {isError && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-red-400">
-            Failed to load repositories.
-          </p>
-        </div>
+      {isError && !repositories && (
+        <GitHubRateLimitMessage error={error} onRetry={() => refetch()} />
       )}
 
       {repositories && (
