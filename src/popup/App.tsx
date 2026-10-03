@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { GitHubConnect } from "./components/GitHubConnect";
 import { getAuth, setAuth, clearAuth } from "../lib/storage/auth";
 import { getGitHubUser } from "../lib/github/client";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TodayProductivity } from "./components/TodayProductivity";
 import { WeeklyActivity } from "./components/WeeklyActivity";
 import { RepositorySection } from "./components/RepositorySection";
@@ -88,11 +89,17 @@ function Dashboard({ username }: { username: string | null }) {
       </header>
 
       <div className="space-y-5">
-        <TodayProductivity />
+        <ErrorBoundary>
+          <TodayProductivity />
+        </ErrorBoundary>
 
-        <WeeklyActivity />
+        <ErrorBoundary>
+          <WeeklyActivity />
+        </ErrorBoundary>
 
-        <RepositorySection />
+        <ErrorBoundary>
+          <RepositorySection />
+        </ErrorBoundary>
       </div>
     </main>
   );

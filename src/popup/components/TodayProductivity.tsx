@@ -39,6 +39,12 @@ export function TodayProductivity() {
     );
   }
 
+  const commits = typeof productivity?.commits === "number" ? productivity.commits : 0;
+  const pullRequests = typeof data?.pullRequests === "number" ? data.pullRequests : 0;
+  const issues = typeof data?.issues === "number" ? data.issues : 0;
+  const activeRepositories =
+    typeof data?.activeRepositories === "number" ? data.activeRepositories : 0;
+
   return (
     <div>
       <div className="mb-3">
@@ -65,7 +71,7 @@ export function TodayProductivity() {
           </div>
 
           <p className="mt-2 text-xl font-semibold text-white">
-            {productivity.commits}
+            {commits}
           </p>
         </div>
 
@@ -82,7 +88,7 @@ export function TodayProductivity() {
           </div>
 
           <p className="mt-2 text-xl font-semibold text-white">
-            {data.pullRequests}
+            {pullRequests}
           </p>
         </div>
 
@@ -99,7 +105,7 @@ export function TodayProductivity() {
           </div>
 
           <p className="mt-2 text-xl font-semibold text-white">
-            {data.issues}
+            {issues}
           </p>
         </div>
         <div className="min-h-[82px] rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
@@ -115,7 +121,7 @@ export function TodayProductivity() {
           </div>
 
           <p className="mt-2 text-xl font-semibold text-white">
-            {data.activeRepositories}
+            {activeRepositories}
           </p>
         </div>
       </div>

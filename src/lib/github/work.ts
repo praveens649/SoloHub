@@ -34,25 +34,32 @@ export async function getTodayWork(
     ),
   ]);
 
-  const mergedPullRequests = prs.items.filter(
+  const prItems = Array.isArray(prs?.items) ? prs.items : [];
+  const issueItems = Array.isArray(issues?.items) ? issues.items : [];
+
+  const mergedPullRequests = prItems.filter(
     (pr) => pr.merged_at !== null
   ).length;
 
   const repositories = new Set<string>();
 
-  for (const pr of prs.items) {
-    repositories.add(pr.repository_url);
+  for (const pr of prItems) {
+    if (pr?.repository_url) {
+      repositories.add(pr.repository_url);
+    }
   }
 
-  for (const issue of issues.items) {
-    repositories.add(issue.repository_url);
+  for (const issue of issueItems) {
+    if (issue?.repository_url) {
+      repositories.add(issue.repository_url);
+    }
   }
 
   return {
-    pullRequests: prs.total_count,
+    pullRequests: prs?.total_count ?? prItems.length,
     mergedPullRequests,
-    issues: issues.total_count,
-    closedIssues: issues.items.filter(
+    issues: issues?.total_count ?? issueItems.length,
+    closedIssues: issueItems.filter(
       (issue) => issue.closed_at !== null
     ).length,
     activeRepositories: repositories.size,
