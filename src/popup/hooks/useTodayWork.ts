@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAuth } from "../../lib/storage/auth";
+import { getAuth, setAuth } from "../../lib/storage/auth";
+import { getGitHubUser } from "../../lib/github/client";
 import { getTodayWork } from "../../lib/github/work";
 
 export function useTodayWork() {
@@ -9,13 +10,19 @@ export function useTodayWork() {
     queryFn: async () => {
       const auth = await getAuth();
 
-      if (!auth?.token || !auth.user) {
+      if (!auth?.token) {
         throw new Error("Not authenticated");
+      }
+
+      let user = auth.user;
+      if (!user) {
+        user = await getGitHubUser(auth.token);
+        await setAuth(auth.token, user);
       }
 
       return getTodayWork(
         auth.token,
-        auth.user.login
+        user.login
       );
     },
 

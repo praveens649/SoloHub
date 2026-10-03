@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { GitHubConnect } from "./components/GitHubConnect";
-import { getAuth, clearAuth } from "../lib/storage/auth";
+import { getAuth, setAuth, clearAuth } from "../lib/storage/auth";
 import { getGitHubUser } from "../lib/github/client";
 import { TodayProductivity } from "./components/TodayProductivity";
 import { WeeklyActivity } from "./components/WeeklyActivity";
@@ -23,6 +23,7 @@ function App() {
 
         // Validate stored token
         const user = await getGitHubUser(auth.token);
+        await setAuth(auth.token, user);
 
         setAuthenticated(true);
         setUsername(user.login);

@@ -37,6 +37,9 @@ export interface GitHubCommit {
       date: string;
     } | null;
   };
+  author?: {
+    login: string;
+  } | null;
   repository?: {
     name: string;
   };
@@ -62,12 +65,14 @@ export async function getRepositoryCommits(
   owner: string,
   repo: string,
   since: string,
-  until: string
+  until: string,
+  author?: string
 ): Promise<GitHubCommit[]> {
+  const authorParam = author ? `&author=${encodeURIComponent(author)}` : "";
   return githubFetch<GitHubCommit[]>(
     `/repos/${owner}/${repo}/commits?since=${encodeURIComponent(
       since
-    )}&until=${encodeURIComponent(until)}&per_page=100`,
+    )}&until=${encodeURIComponent(until)}${authorParam}&per_page=100`,
     token
   );
 }

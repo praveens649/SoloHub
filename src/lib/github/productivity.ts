@@ -1,4 +1,4 @@
-import type { GitHubRepository, GitHubUser } from "./types";
+import type { GitHubRepository } from "./types";
 import { getRepositoryCommits } from "./client";
 
 export interface DailyActivity {
@@ -33,8 +33,8 @@ function getLast7Days() {
 
 export async function getWeeklyProductivity(
   token: string,
-  user: GitHubUser,
-  repositories: GitHubRepository[]
+  repositories: GitHubRepository[],
+  author?: string
 ): Promise<ProductivitySummary> {
   const days = getLast7Days();
 
@@ -61,10 +61,11 @@ export async function getWeeklyProductivity(
       try {
         const commits = await getRepositoryCommits(
           token,
-          user.login,
+          repository.owner.login,
           repository.name,
           since.toISOString(),
-          until.toISOString()
+          until.toISOString(),
+          author
         );
 
         return {
@@ -131,13 +132,13 @@ export async function getWeeklyProductivity(
 
 export async function getTodayProductivity(
   token: string,
-  user: GitHubUser,
-  repositories: GitHubRepository[]
+  repositories: GitHubRepository[],
+  author?: string
 ): Promise<DailyActivity> {
   const summary = await getWeeklyProductivity(
     token,
-    user,
-    repositories
+    repositories,
+    author
   );
 
   return summary.today;
