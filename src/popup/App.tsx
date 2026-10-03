@@ -4,6 +4,8 @@ import { getAuth, setAuth, clearAuth } from "../lib/storage/auth";
 import { getGitHubUser } from "../lib/github/client";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TodayProductivity } from "./components/TodayProductivity";
+import { PullRequestSection } from "./components/PullRequestSection";
+import { IssueSection } from "./components/IssueSection";
 import { WeeklyActivity } from "./components/WeeklyActivity";
 import { RepositorySection } from "./components/RepositorySection";
 
@@ -91,6 +93,14 @@ function Dashboard({ username }: { username: string | null }) {
       <div className="space-y-5">
         <ErrorBoundary>
           <TodayProductivity />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <PullRequestSection />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <IssueSection />
         </ErrorBoundary>
 
         <ErrorBoundary>

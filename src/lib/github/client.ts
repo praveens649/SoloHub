@@ -16,6 +16,35 @@ export interface GitHubPullRequest {
   updated_at: string;
   repository_url: string;
   html_url: string;
+  draft?: boolean;
+  comments?: number;
+  review_comments?: number;
+  user?: {
+    login: string;
+    avatar_url?: string;
+  };
+  pull_request?: {
+    merged_at?: string | null;
+    html_url?: string;
+  };
+  repository?: {
+    owner: string;
+    name: string;
+    full_name: string;
+  };
+}
+
+export interface GitHubMergeResult {
+  sha: string;
+  merged: boolean;
+  message: string;
+}
+
+export interface GitHubIssueLabel {
+  id: number;
+  name: string;
+  color: string;
+  description?: string | null;
 }
 
 export interface GitHubIssue {
@@ -24,9 +53,22 @@ export interface GitHubIssue {
   title: string;
   state: "open" | "closed";
   created_at: string;
+  updated_at: string;
   closed_at: string | null;
   repository_url: string;
   html_url: string;
+  body?: string | null;
+  comments?: number;
+  labels?: GitHubIssueLabel[];
+  user?: {
+    login: string;
+    avatar_url?: string;
+  };
+  repository?: {
+    owner: string;
+    name: string;
+    full_name: string;
+  };
 }
 export interface GitHubCommit {
   sha: string;
@@ -112,9 +154,20 @@ export async function githubFetch<T>(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `GitHub API error: ${response.status} ${response.statusText}`
-    );
+    let errorMessage = `GitHub API error: ${response.status} ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (errorData?.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // Ignore json parse error and keep default statusText
+    }
+    throw new Error(errorMessage);
+  }
+
+  if (response.status === 204) {
+    return null as T;
   }
 
   return response.json();
@@ -129,12 +182,133 @@ export async function getGitHubUser(token: string) {
     html_url: string;
   }>("/user", token);
 }
+
 export async function searchGitHub<T>(
   token: string,
   query: string
 ): Promise<GitHubSearchResult<T>> {
   return githubFetch<GitHubSearchResult<T>>(
-    `/search/issues?q=${encodeURIComponent(query)}&per_page=100`,
+    `/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=30`,
     token
+  );
+}
+
+export async function getUserPullRequests(
+  token: string,
+  username: string,
+  state: "open" | "closed" = "open"
+): Promise<GitHubPullRequest[]> {
+  const query = `author:${username} is:pr is:${state}`;
+  const result = await searchGitHub<GitHubPullRequest>(token, query);
+
+  const items = Array.isArray(result?.items) ? result.items : [];
+
+  return items.map((item) => {
+    const parts = item.repository_url ? item.repository_url.split("/") : [];
+    const name = parts[parts.length - 1] || "";
+    const owner = parts[parts.length - 2] || "";
+
+    return {
+      ...item,
+      merged_at: item.merged_at ?? item.pull_request?.merged_at ?? null,
+      repository: {
+        owner,
+        name,
+        full_name: owner && name ? `${owner}/${name}` : "",
+      },
+    };
+  });
+}
+
+export async function mergePullRequest(
+  token: string,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  mergeMethod: "squash" | "merge" | "rebase" = "squash"
+): Promise<GitHubMergeResult> {
+  return githubFetch<GitHubMergeResult>(
+    `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`,
+    token,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        merge_method: mergeMethod,
+      }),
+    }
+  );
+}
+
+export async function getUserIssues(
+  token: string,
+  username: string,
+  state: "open" | "closed" = "open"
+): Promise<GitHubIssue[]> {
+  const query = `author:${username} is:issue is:${state}`;
+  const result = await searchGitHub<GitHubIssue>(token, query);
+
+  const items = Array.isArray(result?.items) ? result.items : [];
+
+  return items.map((item) => {
+    const parts = item.repository_url ? item.repository_url.split("/") : [];
+    const name = parts[parts.length - 1] || "";
+    const owner = parts[parts.length - 2] || "";
+
+    return {
+      ...item,
+      repository: {
+        owner,
+        name,
+        full_name: owner && name ? `${owner}/${name}` : "",
+      },
+    };
+  });
+}
+
+export async function updateIssueState(
+  token: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  state: "open" | "closed"
+): Promise<GitHubIssue> {
+  return githubFetch<GitHubIssue>(
+    `/repos/${owner}/${repo}/issues/${issueNumber}`,
+    token,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        state,
+      }),
+    }
+  );
+}
+
+export async function createIssue(
+  token: string,
+  owner: string,
+  repo: string,
+  title: string,
+  body?: string
+): Promise<GitHubIssue> {
+  return githubFetch<GitHubIssue>(
+    `/repos/${owner}/${repo}/issues`,
+    token,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        ...(body ? { body } : {}),
+      }),
+    }
   );
 }
