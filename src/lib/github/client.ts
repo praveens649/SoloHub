@@ -312,3 +312,32 @@ export async function createIssue(
     }
   );
 }
+
+export interface CreateRepositoryParams {
+  name: string;
+  description?: string;
+  private?: boolean;
+  autoInit?: boolean;
+}
+
+export async function createRepository(
+  token: string,
+  params: CreateRepositoryParams
+): Promise<GitHubRepository> {
+  return githubFetch<GitHubRepository>(
+    "/user/repos",
+    token,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: params.name,
+        description: params.description || undefined,
+        private: Boolean(params.private),
+        auto_init: Boolean(params.autoInit),
+      }),
+    }
+  );
+}
