@@ -10,13 +10,26 @@ export default defineManifest({
   description:
     "A productivity GitHub control center for solo developers.",
 
-  permissions: ["storage","identity","tabs"],
+  icons: {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png",
+  },
+
+  permissions: ["storage", "identity", "tabs"],
   host_permissions: [
-  "http://localhost:3001/*",
-],
+    "http://localhost:3001/*",
+  ],
 
   action: {
     default_popup: "index.html",
+    default_icon: {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png",
+    },
   },
 
   background: {

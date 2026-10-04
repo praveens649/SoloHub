@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TerminalBadgeIcon, GithubIcon } from "./Icons";
+import { GithubIcon } from "./Icons";
 import { loginWithGitHub } from "../../lib/github/auth";
 import { getGitHubUser } from "../../lib/github/client";
 import { setAuth } from "../../lib/storage/auth";
@@ -72,9 +72,13 @@ export function HomeHero({ onSuccess }: HomeHeroProps) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center select-none bg-[#090A0F]">
-      {/* Terminal Icon Badge */}
-      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#27272A] bg-[#0F0F11] shadow-lg">
-        <TerminalBadgeIcon className="h-7 w-7 text-[#FAFAFA]" />
+      {/* SoloHub App Icon Badge */}
+      <div className="mb-5 flex items-center justify-center">
+        <img
+          src="/icons/icon-128.png"
+          alt="SoloHub"
+          className="h-16 w-16 rounded-2xl object-cover shadow-2xl transition-transform duration-200 hover:scale-105"
+        />
       </div>
 
       {/* Title */}

@@ -152,7 +152,14 @@ export function SettingsPage({
 
         <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[#FAFAFA] font-medium">Solohub</span>
+            <div className="flex items-center gap-2">
+              <img
+                src="/icons/icon-32.png"
+                alt="SoloHub"
+                className="h-4 w-4 rounded object-contain"
+              />
+              <span className="text-[#FAFAFA] font-medium">Solohub</span>
+            </div>
             <span className="font-mono text-[#71717A]">v0.1.0</span>
           </div>
           <p className="text-[11px] text-[#71717A] leading-relaxed">

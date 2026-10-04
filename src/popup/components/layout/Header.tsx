@@ -35,8 +35,13 @@ export function Header({
   return (
     <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-[#27272A] bg-[#09090B] px-4">
       {/* Brand Title */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-black tracking-wider text-[#FAFAFA] select-none">
+      <div className="flex items-center gap-2 select-none">
+        <img
+          src="/icons/icon-32.png"
+          alt="SoloHub"
+          className="h-5 w-5 rounded object-contain"
+        />
+        <span className="text-sm font-black tracking-wider text-[#FAFAFA]">
           SOLOHUB
         </span>
       </div>

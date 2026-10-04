@@ -432,7 +432,15 @@ export function CommandPalette({
               <kbd className="font-mono">esc</kbd> close
             </span>
           </div>
-          <span>Solohub</span>
+
+          <div className="flex items-center gap-1.5 text-[10px] text-[#71717A]">
+            <img
+              src="/icons/icon-16.png"
+              alt="SoloHub"
+              className="h-3 w-3 rounded-xs object-contain"
+            />
+            <span>Solohub</span>
+          </div>
         </div>
       </div>
     </div>

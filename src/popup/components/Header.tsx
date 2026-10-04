@@ -16,8 +16,13 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-4 py-3 backdrop-blur-md">
-      <div className="flex items-center gap-2">
-        <span className="text-base font-extrabold tracking-wider text-white select-none">
+      <div className="flex items-center gap-2 select-none">
+        <img
+          src="/icons/icon-32.png"
+          alt="SoloHub"
+          className="h-5 w-5 rounded object-contain"
+        />
+        <span className="text-base font-extrabold tracking-wider text-white">
           SOLOHUB
         </span>
       </div>
