@@ -5,10 +5,15 @@ import {
   GitMerge,
   GitPullRequest,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { usePullRequests, useMergePullRequest } from "../hooks/usePullRequests";
 import { useIssues, useUpdateIssueState } from "../hooks/useIssues";
-import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
+import { ErrorState } from "./feedback/ErrorState";
+import { CardSkeleton } from "./feedback/Skeletons";
+import { ConfirmDialog } from "./feedback/ConfirmDialog";
+import { useToast } from "./feedback/ToastContext";
+import { formatGitHubError } from "../../lib/github/errors";
 import type { GitHubIssue, GitHubPullRequest } from "../../lib/github/client";
 
 export type ActionItem =
@@ -160,21 +165,18 @@ export function ActionCenter({
         </div>
       )}
 
-      {/* Loading state */}
-      {isLoading && !hasData && (
-        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-4 text-center">
-          <p className="text-xs text-[#71717A]">Loading actionable items...</p>
-        </div>
-      )}
+      {/* Loading state with CardSkeleton */}
+      {isLoading && !hasData && <CardSkeleton count={previewLimit || 2} />}
 
       {/* Error state */}
       {!isLoading && isError && !hasData && (
-        <GitHubRateLimitMessage
+        <ErrorState
           error={prsErrorObj || issuesErrorObj}
           onRetry={() => {
             refetchPrs();
             refetchIssues();
           }}
+          fallbackMessage="Unable to load action items."
         />
       )}
 
@@ -210,8 +212,8 @@ export function ActionCenter({
 }
 
 function ActionCenterItem({ item }: { item: ActionItem }) {
-  const [confirming, setConfirming] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const toast = useToast();
 
   const mergeMutation = useMergePullRequest();
   const updateIssueMutation = useUpdateIssueState();
@@ -237,20 +239,8 @@ function ActionCenterItem({ item }: { item: ActionItem }) {
     }
   }
 
-  function handleActionClick() {
-    setActionError(null);
-    setConfirming(true);
-  }
-
-  function handleCancel() {
-    setConfirming(false);
-    setActionError(null);
-  }
-
-  async function handleConfirm() {
+  async function handleConfirmAction() {
     try {
-      setActionError(null);
-
       if (isPR && pr) {
         const owner = pr.repository?.owner;
         const repo = pr.repository?.name;
@@ -265,6 +255,8 @@ function ActionCenterItem({ item }: { item: ActionItem }) {
           pullNumber: pr.number,
           mergeMethod: "squash",
         });
+
+        toast.success("✓ Pull request merged");
       } else if (!isPR && issue) {
         const owner = issue.repository?.owner;
         const repo = issue.repository?.name;
@@ -279,15 +271,15 @@ function ActionCenterItem({ item }: { item: ActionItem }) {
           issueNumber: issue.number,
           state: "closed",
         });
+
+        toast.success("✓ Issue closed");
       }
 
-      setConfirming(false);
+      setConfirmOpen(false);
     } catch (err) {
-      const defaultMsg = isPR
-        ? "Unable to merge pull request."
-        : "Unable to close issue.";
-      const message = err instanceof Error ? err.message : defaultMsg;
-      setActionError(message);
+      const fallback = isPR ? "Unable to merge pull request." : "Unable to close issue.";
+      const msg = formatGitHubError(err, fallback);
+      toast.error(msg);
     }
   }
 
@@ -296,127 +288,130 @@ function ActionCenterItem({ item }: { item: ActionItem }) {
     : updateIssueMutation.isPending;
 
   return (
-    <div className="space-y-2 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 transition-colors hover:border-[#3F3F46]">
-      {/* Top row: Type badge, Repo & Number, Relative time */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {isPR ? (
-              <span className="inline-flex items-center gap-1 rounded bg-blue-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-900/60">
-                <GitPullRequest size={10} />
-                PR
+    <>
+      <div className="space-y-2 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 transition-colors hover:border-[#3F3F46]">
+        {/* Top row: Type badge, Repo & Number, Relative time */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {isPR ? (
+                <span className="inline-flex items-center gap-1 rounded bg-blue-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-900/60">
+                  <GitPullRequest size={10} />
+                  PR
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 border border-amber-900/60">
+                  <CircleDot size={10} />
+                  Issue
+                </span>
+              )}
+
+              {isDraft && (
+                <span className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 border border-zinc-700">
+                  Draft
+                </span>
+              )}
+
+              <span className="truncate text-[11px] text-[#71717A]">
+                {repoName} • #{number}
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 border border-amber-900/60">
-                <CircleDot size={10} />
-                Issue
-              </span>
-            )}
-
-            {isDraft && (
-              <span className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 border border-zinc-700">
-                Draft
-              </span>
-            )}
-
-            <span className="truncate text-[11px] text-[#71717A]">
-              {repoName} • #{number}
-            </span>
-          </div>
-
-          <h3
-            className="mt-1 text-xs font-semibold text-[#FAFAFA] leading-snug line-clamp-2"
-            title={title}
-          >
-            {title}
-          </h3>
-        </div>
-
-        <span className="shrink-0 text-[10px] text-[#71717A]">
-          {formatRelativeTime(item.updatedAt)}
-        </span>
-      </div>
-
-      {/* Error Message */}
-      {actionError && (
-        <div className="rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
-          <p className="font-medium">
-            {isPR ? "Unable to merge PR." : "Unable to close issue."}
-          </p>
-          <p className="mt-0.5 text-[10px] text-red-400/90">{actionError}</p>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      <div className="pt-0.5">
-        {confirming ? (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-[#27272A] bg-[#18181B] p-2">
-            <span className="text-[11px] text-[#A1A1AA]">
-              {isPR ? "Confirm squash & merge?" : "Confirm close issue?"}
-            </span>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={isPending}
-                className="rounded border border-[#27272A] px-2 py-1 text-[11px] text-[#A1A1AA] transition-colors hover:bg-[#27272A] hover:text-[#FAFAFA] disabled:opacity-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={isPending}
-                className={`rounded px-2.5 py-1 text-[11px] font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer ${
-                  isPR
-                    ? "bg-emerald-600 hover:bg-emerald-500"
-                    : "bg-red-600 hover:bg-red-500"
-                }`}
-              >
-                {isPending ? "Processing..." : isPR ? "Merge" : "Close"}
-              </button>
             </div>
+
+            <h3
+              className="mt-1 text-xs font-semibold text-[#FAFAFA] leading-snug line-clamp-2"
+              title={title}
+            >
+              {title}
+            </h3>
           </div>
-        ) : (
-          <div className="flex items-center gap-2">
+
+          <span className="shrink-0 text-[10px] text-[#71717A]">
+            {formatRelativeTime(item.updatedAt)}
+          </span>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 pt-0.5">
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="flex h-7 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F] px-2.5 text-[11px] font-medium text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
+          >
+            <span>Open</span>
+            <ExternalLink size={11} />
+          </button>
+
+          {/* Merge button for PR (only when not draft) */}
+          {canMerge && (
             <button
               type="button"
-              onClick={handleOpen}
-              className="flex h-7 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F] px-2.5 text-[11px] font-medium text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
+              onClick={() => setConfirmOpen(true)}
+              disabled={isPending}
+              className="flex h-7 items-center justify-center gap-1 rounded-md border border-emerald-900/60 bg-emerald-950/30 px-2.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-900/50 hover:text-emerald-200 disabled:opacity-50 cursor-pointer"
             >
-              <span>Open</span>
-              <ExternalLink size={11} />
+              {isPending ? (
+                <>
+                  <Loader2 size={11} className="animate-spin" />
+                  <span>Merging...</span>
+                </>
+              ) : (
+                <>
+                  <GitMerge size={11} />
+                  <span>Merge</span>
+                </>
+              )}
             </button>
+          )}
 
-            {/* Merge button for PR (only when not draft) */}
-            {canMerge && (
-              <button
-                type="button"
-                onClick={handleActionClick}
-                disabled={isPending}
-                className="flex h-7 items-center justify-center gap-1 rounded-md border border-emerald-900/60 bg-emerald-950/30 px-2.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-900/50 hover:text-emerald-200 cursor-pointer"
-              >
-                <GitMerge size={11} />
-                <span>Merge</span>
-              </button>
-            )}
-
-            {/* Close button for Issue */}
-            {!isPR && (
-              <button
-                type="button"
-                onClick={handleActionClick}
-                disabled={isPending}
-                className="flex h-7 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F] px-2.5 text-[11px] font-medium text-[#A1A1AA] transition-colors hover:bg-red-950/30 hover:border-red-900/50 hover:text-red-300 cursor-pointer"
-              >
+          {/* Close button for Issue */}
+          {!isPR && (
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              disabled={isPending}
+              className="flex h-7 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F] px-2.5 text-[11px] font-medium text-[#A1A1AA] transition-colors hover:bg-red-950/30 hover:border-red-900/50 hover:text-red-300 disabled:opacity-50 cursor-pointer"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 size={11} className="animate-spin" />
+                  <span>Closing...</span>
+                </>
+              ) : (
                 <span>Close</span>
-              </button>
-            )}
-          </div>
-        )}
+              )}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title={isPR ? "Merge pull request?" : "Close issue?"}
+        description={
+          <div>
+            <p className="font-medium text-[#FAFAFA]">#{number} {title}</p>
+            <p className="mt-1 text-[11px] text-[#71717A]">
+              {isPR
+                ? `Will be squash merged into ${repoName}.`
+                : `Will be marked as closed in ${repoName}.`}
+            </p>
+          </div>
+        }
+        confirmLabel={
+          isPending
+            ? isPR
+              ? "Merging..."
+              : "Closing..."
+            : isPR
+            ? "Merge"
+            : "Close Issue"
+        }
+        loading={isPending}
+        variant={isPR ? "default" : "danger"}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }

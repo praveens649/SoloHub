@@ -17,6 +17,7 @@ import { usePullRequests } from "./hooks/usePullRequests";
 import { useIssues } from "./hooks/useIssues";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { FeedbackProvider } from "./components/feedback/ToastContext";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -157,7 +158,7 @@ function App() {
 
   // 3. Authenticated App Experience (AppShell + Pages + BottomNav + Command Palette)
   return (
-    <>
+    <FeedbackProvider>
       <AppShell
         user={user}
         currentPage={currentPage}
@@ -220,7 +221,7 @@ function App() {
           </div>
         </div>
       )}
-    </>
+    </FeedbackProvider>
   );
 }
 

@@ -12,6 +12,7 @@ import { useCreateRepository } from "../hooks/useRepositories";
 import { CollaboratorSection } from "./CollaboratorSection";
 import type { GitHubRepository } from "../../lib/github/types";
 import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
+import { useToast } from "./feedback/ToastContext";
 
 export type QuickActionMode = "none" | "create-repo" | "manage-access";
 
@@ -35,6 +36,8 @@ export function QuickActions({
   const [copiedProtocol, setCopiedProtocol] = useState<"https" | "ssh" | null>(
     null
   );
+
+  const toast = useToast();
 
   useEffect(() => {
     if (initialMode) {
@@ -88,23 +91,25 @@ export function QuickActions({
       });
 
       setCreatedRepo(repo);
+      toast.success("✓ Repository created");
     } catch (err) {
+      let message = "Unable to create repository.";
       if (err instanceof GitHubApiError) {
         if (err.isRateLimit) {
-          setApiError(err.getFriendlyMessage());
-          return;
-        }
-        if (
+          message = err.getFriendlyMessage();
+        } else if (
           err.status === 422 ||
           err.message.toLowerCase().includes("already exists")
         ) {
-          setApiError("Repository name already exists.");
-          return;
+          message = "Repository name already exists.";
+        } else {
+          message = err.getFriendlyMessage();
         }
-        setApiError(err.getFriendlyMessage());
-        return;
+      } else {
+        message = formatGitHubError(err, "Unable to create repository.");
       }
-      setApiError(formatGitHubError(err, "Unable to create repository."));
+      setApiError(message);
+      toast.error(message);
     }
   }
 
@@ -193,7 +198,7 @@ export function QuickActions({
                   {copiedProtocol === "https" ? (
                     <>
                       <Check size={10} className="text-emerald-400" />
-                      <span className="text-emerald-400">Copied!</span>
+                      <span className="text-emerald-400">Copied</span>
                     </>
                   ) : (
                     <>
@@ -219,7 +224,7 @@ export function QuickActions({
                   {copiedProtocol === "ssh" ? (
                     <>
                       <Check size={10} className="text-emerald-400" />
-                      <span className="text-emerald-400">Copied!</span>
+                      <span className="text-emerald-400">Copied</span>
                     </>
                   ) : (
                     <>

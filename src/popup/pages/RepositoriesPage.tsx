@@ -3,6 +3,7 @@ import { useRepositories } from "../hooks/useRepositories";
 import { RepositoryCard } from "../components/RepositoryCard";
 import { GitHubRateLimitMessage } from "../components/GitHubRateLimitMessage";
 import { Search } from "lucide-react";
+import { CardSkeleton } from "../components/feedback/Skeletons";
 
 export type RepoFilter = "all" | "public" | "private" | "starred";
 
@@ -27,6 +28,7 @@ export function RepositoriesPage({ autoFocusSearch = false }: RepositoriesPagePr
   const {
     data: repositories,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -94,16 +96,19 @@ export function RepositoriesPage({ autoFocusSearch = false }: RepositoriesPagePr
           ))}
         </div>
 
-        <span className="text-[11px] text-[#71717A] font-mono">
-          {filteredRepositories.length} repos
-        </span>
+        <div className="flex items-center gap-1.5">
+          {isFetching && repositories && (
+            <span className="text-[10px] text-zinc-500 animate-pulse">Refreshing...</span>
+          )}
+          <span className="text-[11px] text-[#71717A] font-mono">
+            {filteredRepositories.length} repos
+          </span>
+        </div>
       </div>
 
       {/* Loading state */}
       {isLoading && !repositories && (
-        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-4 text-center">
-          <p className="text-xs text-[#71717A]">Loading repositories...</p>
-        </div>
+        <CardSkeleton count={3} />
       )}
 
       {/* Error state */}

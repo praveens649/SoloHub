@@ -4,6 +4,7 @@ import { useIssues } from "../hooks/useIssues";
 import { IssueCard } from "./IssueCard";
 import { NewIssueForm } from "./NewIssueForm";
 import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
+import { CardSkeleton } from "./feedback/Skeletons";
 
 export function IssueSection() {
   const [filter, setFilter] = useState<"open" | "closed">("open");
@@ -67,9 +68,7 @@ export function IssueSection() {
 
       {/* Status states */}
       {isLoading && !issues && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-zinc-500">Loading issues...</p>
-        </div>
+        <CardSkeleton count={3} />
       )}
 
       {isError && !issues && (

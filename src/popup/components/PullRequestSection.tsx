@@ -2,6 +2,7 @@ import { useState } from "react";
 import { usePullRequests } from "../hooks/usePullRequests";
 import { PullRequestCard } from "./PullRequestCard";
 import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
+import { CardSkeleton } from "./feedback/Skeletons";
 
 export function PullRequestSection() {
   const [filter, setFilter] = useState<"open" | "closed">("open");
@@ -41,9 +42,7 @@ export function PullRequestSection() {
       </div>
 
       {isLoading && !pullRequests && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-zinc-500">Loading pull requests...</p>
-        </div>
+        <CardSkeleton count={3} />
       )}
 
       {isError && !pullRequests && (

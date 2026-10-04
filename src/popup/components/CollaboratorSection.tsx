@@ -22,6 +22,9 @@ import type {
   GitHubRepository,
 } from "../../lib/github/types";
 import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
+import { useToast } from "./feedback/ToastContext";
+import { ConfirmDialog } from "./feedback/ConfirmDialog";
+import { CollaboratorSkeleton } from "./feedback/Skeletons";
 
 interface CollaboratorSectionProps {
   onClose?: () => void;
@@ -91,6 +94,8 @@ export function CollaboratorSection({
   const [selectedRepoKey, setSelectedRepoKey] = useState<string>(
     initialRepository ? `${initialRepository.owner.login}/${initialRepository.name}` : ""
   );
+
+  const toast = useToast();
 
   // Add collaborator form state
   const [isAdding, setIsAdding] = useState(false);
@@ -168,14 +173,14 @@ export function CollaboratorSection({
         permission,
       });
 
-      setSuccessMessage(`Invitation sent to @${trimmedUser}.`);
+      toast.success(`✓ Invitation sent to ${trimmedUser}`);
       setUsername("");
       setPermission("push");
       setIsAdding(false);
     } catch (err) {
-      setAddApiError(
-        formatCollaboratorError(err, "Unable to add collaborator.")
-      );
+      const errText = formatCollaboratorError(err, "Unable to add collaborator.");
+      setAddApiError(errText);
+      toast.error(errText);
     }
   }
 
@@ -193,11 +198,11 @@ export function CollaboratorSection({
       });
 
       setConfirmRemovingUser(null);
-      setSuccessMessage(`Removed @${collaboratorLogin} from collaborators.`);
+      toast.success("✓ Collaborator removed");
     } catch (err) {
-      setRemoveApiError(
-        formatCollaboratorError(err, "Unable to remove collaborator.")
-      );
+      const errText = formatCollaboratorError(err, "Unable to remove collaborator.");
+      setRemoveApiError(errText);
+      toast.error(errText);
     }
   }
 
@@ -428,9 +433,7 @@ export function CollaboratorSection({
 
           {/* Loading state */}
           {isLoadingCollaborators && (
-            <div className="py-4 text-center text-xs text-zinc-500">
-              Loading collaborators...
-            </div>
+            <CollaboratorSkeleton count={3} />
           )}
 
           {/* Error state */}
@@ -477,10 +480,6 @@ export function CollaboratorSection({
                   const isCurrent =
                     currentUser &&
                     collab.login.toLowerCase() === currentUser.toLowerCase();
-                  const isConfirming = confirmRemovingUser === collab.login;
-                  const isRemovingThis =
-                    removeMutation.isPending &&
-                    removeMutation.variables?.username === collab.login;
 
                   return (
                     <div
@@ -535,7 +534,7 @@ export function CollaboratorSection({
                         </div>
 
                         {/* Action buttons (only if not owner) */}
-                        {!isOwner && !isConfirming && (
+                        {!isOwner && (
                           <button
                             type="button"
                             onClick={() =>
@@ -548,38 +547,6 @@ export function CollaboratorSection({
                           </button>
                         )}
                       </div>
-
-                      {/* Inline confirmation for removal */}
-                      {!isOwner && isConfirming && (
-                        <div className="mt-2 flex items-center justify-between rounded border border-red-900/40 bg-red-950/20 px-2 py-1.5 text-[11px]">
-                          <span className="text-zinc-300">
-                            Remove{" "}
-                            <span className="font-semibold text-white">
-                              {collab.login}
-                            </span>
-                            ?
-                          </span>
-
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => setConfirmRemovingUser(null)}
-                              disabled={isRemovingThis}
-                              className="rounded border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400 transition hover:bg-zinc-800 hover:text-white disabled:opacity-50"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleConfirmRemove(collab.login)}
-                              disabled={isRemovingThis}
-                              className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
-                            >
-                              {isRemovingThis ? "Removing..." : "Remove"}
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -587,6 +554,24 @@ export function CollaboratorSection({
             )}
         </div>
       )}
+
+      {/* Remove Collaborator Confirmation Dialog */}
+      <ConfirmDialog
+        open={Boolean(confirmRemovingUser)}
+        title="Remove collaborator?"
+        description={`${confirmRemovingUser || ""} will lose repository access.`}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={removeMutation.isPending}
+        loadingText="Removing..."
+        onConfirm={() => {
+          if (confirmRemovingUser) {
+            handleConfirmRemove(confirmRemovingUser);
+          }
+        }}
+        onCancel={() => setConfirmRemovingUser(null)}
+      />
     </div>
   );
 }

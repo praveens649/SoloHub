@@ -2,12 +2,14 @@ import { useState } from "react";
 import { usePullRequests } from "../hooks/usePullRequests";
 import { PullRequestCard } from "../components/PullRequestCard";
 import { GitHubRateLimitMessage } from "../components/GitHubRateLimitMessage";
+import { CardSkeleton } from "../components/feedback/Skeletons";
 
 export function PullRequestsPage() {
   const [filter, setFilter] = useState<"open" | "closed">("open");
   const {
     data: pullRequests,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -18,7 +20,12 @@ export function PullRequestsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] text-[#71717A]">Reviews & Merges</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[11px] text-[#71717A]">Reviews & Merges</p>
+            {isFetching && pullRequests && (
+              <span className="text-[10px] text-zinc-500 animate-pulse">Refreshing...</span>
+            )}
+          </div>
           <h1 className="text-base font-bold text-[#FAFAFA]">Pull Requests</h1>
         </div>
 
@@ -43,9 +50,7 @@ export function PullRequestsPage() {
 
       {/* Loading state */}
       {isLoading && !pullRequests && (
-        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-4 text-center">
-          <p className="text-xs text-[#71717A]">Loading pull requests...</p>
-        </div>
+        <CardSkeleton count={3} />
       )}
 
       {/* Rate limit / Error state */}

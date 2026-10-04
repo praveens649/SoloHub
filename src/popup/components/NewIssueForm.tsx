@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { Check, ExternalLink } from "lucide-react";
 import { useRepositories } from "../hooks/useRepositories";
 import { useCreateIssue } from "../hooks/useIssues";
 import type { GitHubIssue } from "../../lib/github/client";
+import { formatGitHubError } from "../../lib/github/errors";
+import { useToast } from "./feedback/ToastContext";
 
 interface NewIssueFormProps {
   onClose: () => void;
@@ -11,6 +13,7 @@ interface NewIssueFormProps {
 export function NewIssueForm({ onClose }: NewIssueFormProps) {
   const { data: repositories, isLoading: reposLoading } = useRepositories();
   const createMutation = useCreateIssue();
+  const toast = useToast();
 
   const [selectedRepoFullName, setSelectedRepoFullName] = useState("");
   const [title, setTitle] = useState("");
@@ -51,10 +54,11 @@ export function NewIssueForm({ onClose }: NewIssueFormProps) {
       });
 
       setCreatedIssue(issue);
+      toast.success("✓ Issue created");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to create issue.";
+      const message = formatGitHubError(err, "Unable to create issue.");
       setFormError(message);
+      toast.error(message);
     }
   }
 
@@ -67,12 +71,13 @@ export function NewIssueForm({ onClose }: NewIssueFormProps) {
   if (createdIssue) {
     return (
       <div className="space-y-2 rounded-lg border border-emerald-900/60 bg-emerald-950/30 p-3">
-        <p className="text-xs font-semibold text-emerald-400">
-          Issue #{createdIssue.number} created successfully!
-        </p>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+          <Check size={14} />
+          <span>Issue created</span>
+        </div>
 
         <p className="truncate text-[11px] text-zinc-300">
-          {createdIssue.title}
+          #{createdIssue.number} · {createdIssue.title}
         </p>
 
         <div className="flex items-center gap-2 pt-1">

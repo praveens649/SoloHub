@@ -9,6 +9,7 @@ import {
 import { useTodayWork } from "../hooks/useTodayWork";
 import { useTodayProductivity } from "../hooks/useTodayProductivity";
 import { GitHubRateLimitMessage } from "./GitHubRateLimitMessage";
+import { MetricSkeleton } from "./feedback/Skeletons";
 
 export function TodayProductivity() {
   const {
@@ -27,11 +28,7 @@ export function TodayProductivity() {
   } = useTodayProductivity();
 
   if ((isLoading && !data) || (productivityLoading && !productivity)) {
-    return (
-      <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3.5">
-        <p className="text-xs text-[#71717A]">Calculating today's activity...</p>
-      </div>
-    );
+    return <MetricSkeleton />;
   }
 
   if ((isError || productivityError) && (!data || !productivity)) {

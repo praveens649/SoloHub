@@ -2,6 +2,9 @@ import { useState } from "react";
 import { CircleDot, CheckCircle2, ExternalLink } from "lucide-react";
 import type { GitHubIssue } from "../../lib/github/client";
 import { useUpdateIssueState } from "../hooks/useIssues";
+import { useToast } from "./feedback/ToastContext";
+import { ConfirmDialog } from "./feedback/ConfirmDialog";
+import { formatGitHubError } from "../../lib/github/errors";
 
 interface IssueCardProps {
   issue: GitHubIssue;
@@ -30,8 +33,7 @@ function formatRelativeTime(dateString: string): string {
 
 export function IssueCard({ issue }: IssueCardProps) {
   const [confirmingClose, setConfirmingClose] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-
+  const toast = useToast();
   const updateMutation = useUpdateIssueState();
 
   function handleOpen() {
@@ -39,19 +41,11 @@ export function IssueCard({ issue }: IssueCardProps) {
   }
 
   function handleCloseClick() {
-    setActionError(null);
     setConfirmingClose(true);
-  }
-
-  function handleCancelClose() {
-    setConfirmingClose(false);
-    setActionError(null);
   }
 
   async function handleConfirmClose() {
     try {
-      setActionError(null);
-
       const owner = issue.repository?.owner;
       const repo = issue.repository?.name;
 
@@ -67,17 +61,14 @@ export function IssueCard({ issue }: IssueCardProps) {
       });
 
       setConfirmingClose(false);
+      toast.success("✓ Issue closed");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to close issue.";
-      setActionError(message);
+      toast.error(formatGitHubError(err, "Unable to close issue."));
     }
   }
 
   async function handleReopen() {
     try {
-      setActionError(null);
-
       const owner = issue.repository?.owner;
       const repo = issue.repository?.name;
 
@@ -91,10 +82,9 @@ export function IssueCard({ issue }: IssueCardProps) {
         issueNumber: issue.number,
         state: "open",
       });
+      toast.success("✓ Issue reopened");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to reopen issue.";
-      setActionError(message);
+      toast.error(formatGitHubError(err, "Unable to reopen issue."));
     }
   }
 
@@ -166,78 +156,52 @@ export function IssueCard({ issue }: IssueCardProps) {
         )}
       </div>
 
-      {/* Error state */}
-      {actionError && (
-        <div className="rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
-          <p className="font-medium">
-            {isOpen ? "Unable to close issue." : "Unable to reopen issue."}
-          </p>
-          <p className="mt-0.5 text-[10px] text-red-400/90">{actionError}</p>
-        </div>
-      )}
-
       {/* Actions */}
-      <div className="pt-1">
-        {confirmingClose ? (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-zinc-800 bg-zinc-950/80 p-2">
-            <span className="text-[11px] text-zinc-300">
-              Close this issue?
-            </span>
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="flex flex-1 items-center justify-center gap-1 rounded-md border border-zinc-800 px-2.5 py-1 text-xs text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+        >
+          <ExternalLink size={12} />
+          Open
+        </button>
 
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleCancelClose}
-                disabled={updateMutation.isPending}
-                className="rounded border border-zinc-800 px-2 py-0.5 text-[11px] text-zinc-400 transition hover:bg-zinc-800 hover:text-white disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConfirmClose}
-                disabled={updateMutation.isPending}
-                className="rounded bg-red-600/90 px-2 py-0.5 text-[11px] font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
-              >
-                {updateMutation.isPending ? "Closing..." : "Close"}
-              </button>
-            </div>
-          </div>
+        {isOpen ? (
+          <button
+            type="button"
+            onClick={handleCloseClick}
+            disabled={updateMutation.isPending}
+            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-50"
+          >
+            <CircleDot size={12} />
+            Close
+          </button>
         ) : (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleOpen}
-              className="flex flex-1 items-center justify-center gap-1 rounded-md border border-zinc-800 px-2.5 py-1 text-xs text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
-            >
-              <ExternalLink size={12} />
-              Open
-            </button>
-
-            {isOpen ? (
-              <button
-                type="button"
-                onClick={handleCloseClick}
-                className="flex flex-1 items-center justify-center gap-1 rounded-md border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
-              >
-                <CircleDot size={12} />
-                Close
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleReopen}
-                disabled={updateMutation.isPending}
-                className="flex flex-1 items-center justify-center gap-1 rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2.5 py-1 text-xs font-medium text-emerald-400 transition hover:bg-emerald-900/50 hover:text-emerald-300 disabled:opacity-50"
-              >
-                <CircleDot size={12} />
-                {updateMutation.isPending ? "Reopening..." : "Reopen"}
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={handleReopen}
+            disabled={updateMutation.isPending}
+            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2.5 py-1 text-xs font-medium text-emerald-400 transition hover:bg-emerald-900/50 hover:text-emerald-300 disabled:opacity-50"
+          >
+            <CircleDot size={12} />
+            {updateMutation.isPending ? "Reopening..." : "Reopen"}
+          </button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmingClose}
+        title="Close issue?"
+        description={`#${issue.number} "${issue.title}" will be closed.`}
+        confirmLabel="Close"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={updateMutation.isPending}
+        loadingText="Closing..."
+        onConfirm={handleConfirmClose}
+        onCancel={() => setConfirmingClose(false)}
+      />
     </div>
   );
 }
