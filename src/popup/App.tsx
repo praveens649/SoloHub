@@ -1,39 +1,30 @@
 import { useEffect, useState, useCallback } from "react";
-import { Header } from "./components/Header";
-import { BottomNav, type NavTab } from "./components/BottomNav";
+import { AppShell } from "./components/layout/AppShell";
+import { type NavPage } from "./components/layout/BottomNav";
+import { HomePage } from "./pages/HomePage";
+import { InboxPage } from "./pages/InboxPage";
+import { PullRequestsPage } from "./pages/PullRequestsPage";
+import { RepositoriesPage } from "./pages/RepositoriesPage";
+import { ExecPage } from "./pages/ExecPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { HomeHero } from "./components/HomeHero";
-import { InboxSection } from "./components/InboxSection";
-import { ExecSection } from "./components/ExecSection";
-import { PullRequestSection } from "./components/PullRequestSection";
-import { RepositorySection } from "./components/RepositorySection";
-import { IssueSection } from "./components/IssueSection";
-import { TodayProductivity } from "./components/TodayProductivity";
-import { WeeklyActivity } from "./components/WeeklyActivity";
-import { ActionCenter } from "./components/ActionCenter";
-import { QuickActions } from "./components/QuickActions";
-import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SearchModal } from "./components/SearchModal";
-import { SettingsModal } from "./components/SettingsModal";
-import { ProfileModal } from "./components/ProfileModal";
 import { getAuth, setAuth, clearAuth } from "../lib/storage/auth";
 import { getGitHubUser, GitHubApiError } from "../lib/github/client";
 import type { GitHubUser } from "../lib/github/types";
-import { Terminal, ArrowRight } from "lucide-react";
-import { GithubIcon } from "./components/Icons";
+import { usePullRequests } from "./hooks/usePullRequests";
+import { useIssues } from "./hooks/useIssues";
+import { useQueryClient } from "@tanstack/react-query";
 
 function App() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState<GitHubUser | null>(null);
-  const [currentTab, setCurrentTab] = useState<NavTab>("home");
-  
-  // Modals state
+  const [currentPage, setCurrentPage] = useState<NavPage>("home");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [execInitialMode, setExecInitialMode] = useState<"none" | "create-repo" | "manage-access">("none");
 
-  // Home view mode: "dashboard" or "hero"
-  const [homeViewMode, setHomeViewMode] = useState<"dashboard" | "hero">("dashboard");
+  const queryClient = useQueryClient();
 
   const checkAuth = useCallback(async () => {
     try {
@@ -50,14 +41,14 @@ function App() {
         setUser(auth.user);
       }
 
-      // Validate stored token against GitHub API
+      // Validate stored token with GitHub
       const freshUser = await getGitHubUser(auth.token);
       await setAuth(auth.token, freshUser);
 
       setAuthenticated(true);
       setUser(freshUser);
     } catch (error) {
-      console.error("Auth validation failed:", error);
+      console.error("Auth check failed:", error);
 
       if (error instanceof GitHubApiError && error.status === 401) {
         await clearAuth();
@@ -82,7 +73,7 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
-  // Global keyboard shortcuts (Ctrl+K or Cmd+K for search)
+  // Global keyboard shortcuts (Ctrl+K or Cmd+K)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -94,248 +85,98 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Fetch counts for badges only when authenticated
+  const { data: openPRs } = usePullRequests("open");
+  const { data: openIssues } = useIssues("open");
+
+  const prsCount = openPRs?.length ?? 0;
+  const inboxCount = (openPRs?.length ?? 0) + (openIssues?.length ?? 0);
+
   function handleLoginSuccess(authenticatedUser: GitHubUser) {
     setUser(authenticatedUser);
     setAuthenticated(true);
-    setHomeViewMode("dashboard");
+    setCurrentPage("home");
   }
 
-  function handleLogout() {
+  async function handleDisconnect() {
+    await clearAuth();
+    queryClient.clear();
     setUser(null);
     setAuthenticated(false);
-    setCurrentTab("home");
+    setCurrentPage("home");
   }
 
-  return (
-    <div className="flex h-[620px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col overflow-hidden bg-zinc-950 text-white shadow-2xl relative font-sans">
-      {/* Top Header matching mockup */}
-      <Header
-        user={user}
-        onOpenSearch={() => setSearchOpen(true)}
-        onOpenSettings={() => setSettingsOpen(true)}
-        onOpenProfile={() => setProfileOpen(true)}
-      />
-
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col">
-        {loading ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-white" />
-            <p className="mt-3 text-xs text-zinc-400">Loading SoloHub...</p>
-          </div>
-        ) : (
-          <TabContent
-            authenticated={authenticated}
-            currentTab={currentTab}
-            user={user}
-            homeViewMode={homeViewMode}
-            onToggleHomeViewMode={() =>
-              setHomeViewMode((prev) => (prev === "dashboard" ? "hero" : "dashboard"))
-            }
-            onLoginSuccess={handleLoginSuccess}
-            onSelectTab={setCurrentTab}
-          />
-        )}
-      </main>
-
-      {/* Bottom Navigation Bar with 5 tabs */}
-      <BottomNav
-        currentTab={currentTab}
-        onSelectTab={setCurrentTab}
-      />
-
-      {/* Interactive Modals */}
-      <SearchModal
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
-
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onAuthChanged={checkAuth}
-      />
-
-      <ProfileModal
-        isOpen={profileOpen}
-        onClose={() => setProfileOpen(false)}
-        user={user}
-        onLogout={handleLogout}
-      />
-    </div>
-  );
-}
-
-interface TabContentProps {
-  authenticated: boolean;
-  currentTab: NavTab;
-  user: GitHubUser | null;
-  homeViewMode: "dashboard" | "hero";
-  onToggleHomeViewMode: () => void;
-  onLoginSuccess: (user: GitHubUser) => void;
-  onSelectTab: (tab: NavTab) => void;
-}
-
-function TabContent({
-  authenticated,
-  currentTab,
-  user,
-  homeViewMode,
-  onToggleHomeViewMode,
-  onLoginSuccess,
-  onSelectTab,
-}: TabContentProps) {
-  // If not authenticated, always show the exact Hero landing view matching the user's mockup
-  if (!authenticated) {
-    if (currentTab === "home") {
-      return (
-        <HomeHero
-          onSuccess={onLoginSuccess}
-          authenticated={false}
-        />
-      );
+  function handleNavigate(
+    page: NavPage,
+    state?: { execMode?: "none" | "create-repo" | "manage-access" }
+  ) {
+    if (state?.execMode) {
+      setExecInitialMode(state.execMode);
+    } else {
+      setExecInitialMode("none");
     }
+    setCurrentPage(page);
+  }
 
-    // If unauthenticated and clicking another tab, show a helpful dark prompt preview
+  // 1. Initial Loading State
+  if (loading) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 mb-4">
-          <Terminal className="h-6 w-6 text-zinc-400" />
-        </div>
-        <h3 className="text-base font-bold text-white capitalize">{currentTab} Preview</h3>
-        <p className="mt-1.5 text-xs text-zinc-400 max-w-xs">
-          Connect your GitHub account to access live {currentTab} tracking, productivity analytics, and automation.
-        </p>
-        <button
-          type="button"
-          onClick={() => onSelectTab("home")}
-          className="mt-5 flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200 cursor-pointer"
-        >
-          <GithubIcon className="h-4 w-4" />
-          <span>Go to Connect</span>
-        </button>
+      <div className="flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col items-center justify-center bg-[#090A0F] text-[#FAFAFA]">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#27272A] border-t-white" />
+        <p className="mt-3 text-xs text-[#71717A]">Checking connection...</p>
       </div>
     );
   }
 
-  // When authenticated, render the respective tab content
-  switch (currentTab) {
-    case "home":
-      if (homeViewMode === "hero") {
-        return (
-          <div className="flex flex-1 flex-col">
-            <div className="px-4 pt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={onToggleHomeViewMode}
-                className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition"
-              >
-                Back to Dashboard <ArrowRight size={12} />
-              </button>
-            </div>
-            <HomeHero
-              onSuccess={onLoginSuccess}
-              authenticated={true}
-              username={user?.login}
-              onExploreDashboard={onToggleHomeViewMode}
-            />
-          </div>
-        );
-      }
-
-      return (
-        <div className="p-4 space-y-5">
-          {/* Welcome status bar */}
-          <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <div>
-                <p className="text-xs font-semibold text-white">
-                  Welcome, @{user?.login}
-                </p>
-                <p className="text-[11px] text-zinc-400">
-                  Control center online
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onToggleHomeViewMode}
-              className="text-[11px] text-zinc-400 hover:text-white transition underline-offset-2 hover:underline"
-            >
-              Hero View
-            </button>
-          </div>
-
-          <ErrorBoundary>
-            <TodayProductivity />
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <ActionCenter />
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <QuickActions />
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <PullRequestSection />
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <IssueSection />
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <WeeklyActivity />
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <RepositorySection />
-          </ErrorBoundary>
-        </div>
-      );
-
-    case "inbox":
-      return (
-        <div className="p-4">
-          <ErrorBoundary>
-            <InboxSection />
-          </ErrorBoundary>
-        </div>
-      );
-
-    case "prs":
-      return (
-        <div className="p-4">
-          <ErrorBoundary>
-            <PullRequestSection />
-          </ErrorBoundary>
-        </div>
-      );
-
-    case "repos":
-      return (
-        <div className="p-4">
-          <ErrorBoundary>
-            <RepositorySection />
-          </ErrorBoundary>
-        </div>
-      );
-
-    case "exec":
-      return (
-        <div className="p-4">
-          <ErrorBoundary>
-            <ExecSection />
-          </ErrorBoundary>
-        </div>
-      );
-
-    default:
-      return null;
+  // 2. Unauthenticated Experience (Separate Hero screen)
+  if (!authenticated) {
+    return (
+      <div className="flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col bg-[#090A0F]">
+        <HomeHero onSuccess={handleLoginSuccess} />
+      </div>
+    );
   }
+
+  // 3. Authenticated App Experience (AppShell + Pages + BottomNav)
+  return (
+    <>
+      <AppShell
+        user={user}
+        currentPage={currentPage}
+        onSelectPage={(page) => handleNavigate(page)}
+        onOpenSearch={() => setSearchOpen(true)}
+        onDisconnect={handleDisconnect}
+        inboxCount={inboxCount}
+        prsCount={prsCount}
+      >
+        {currentPage === "home" && (
+          <HomePage user={user} onNavigate={handleNavigate} />
+        )}
+
+        {currentPage === "inbox" && <InboxPage />}
+
+        {currentPage === "prs" && <PullRequestsPage />}
+
+        {currentPage === "repos" && <RepositoriesPage />}
+
+        {currentPage === "exec" && <ExecPage initialMode={execInitialMode} />}
+
+        {currentPage === "settings" && (
+          <SettingsPage
+            user={user}
+            onBack={() => setCurrentPage("home")}
+            onDisconnect={handleDisconnect}
+          />
+        )}
+      </AppShell>
+
+      {/* Global Search Dialog */}
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
+    </>
+  );
 }
 
 export default App;

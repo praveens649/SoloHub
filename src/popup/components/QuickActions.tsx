@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Check,
   Copy,
@@ -6,7 +6,6 @@ import {
   FolderPlus,
   Globe,
   Lock,
-  Plus,
   Users,
 } from "lucide-react";
 import { useCreateRepository } from "../hooks/useRepositories";
@@ -14,10 +13,18 @@ import { CollaboratorSection } from "./CollaboratorSection";
 import type { GitHubRepository } from "../../lib/github/types";
 import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
 
-type QuickActionMode = "none" | "create-repo" | "manage-access";
+export type QuickActionMode = "none" | "create-repo" | "manage-access";
 
-export function QuickActions() {
-  const [mode, setMode] = useState<QuickActionMode>("none");
+interface QuickActionsProps {
+  initialMode?: QuickActionMode;
+  onModeChange?: (mode: QuickActionMode) => void;
+}
+
+export function QuickActions({
+  initialMode = "none",
+  onModeChange,
+}: QuickActionsProps) {
+  const [mode, setMode] = useState<QuickActionMode>(initialMode);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -28,6 +35,12 @@ export function QuickActions() {
   const [copiedProtocol, setCopiedProtocol] = useState<"https" | "ssh" | null>(
     null
   );
+
+  useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode);
+    }
+  }, [initialMode]);
 
   const createMutation = useCreateRepository();
 
@@ -45,6 +58,13 @@ export function QuickActions() {
   function handleClose() {
     resetForm();
     setMode("none");
+    if (onModeChange) onModeChange("none");
+  }
+
+  function handleSelectMode(newMode: QuickActionMode) {
+    resetForm();
+    setMode(newMode);
+    if (onModeChange) onModeChange(newMode);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -100,157 +120,117 @@ export function QuickActions() {
       setCopiedProtocol(protocol);
       setTimeout(() => setCopiedProtocol(null), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      console.error("Failed to copy commands:", err);
+    }
+  }
+
+  function handleOpenRepo() {
+    if (createdRepo?.html_url) {
+      if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+        chrome.tabs.create({ url: createdRepo.html_url });
+      } else {
+        window.open(createdRepo.html_url, "_blank");
+      }
     }
   }
 
   return (
-    <section>
-      {/* Section Header */}
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-zinc-500">Shortcuts</p>
-          <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
-        </div>
-      </div>
-
-      {/* Default View: Action Cards */}
+    <div className="space-y-3">
+      {/* Mode selection buttons */}
       {mode === "none" && (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => setMode("create-repo")}
-            className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
+            onClick={() => handleSelectMode("create-repo")}
+            className="flex items-center justify-center gap-2 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs font-medium text-[#FAFAFA] transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/80 text-white">
-                <FolderPlus size={16} />
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold text-white">
-                  Create Repository
-                </p>
-                <p className="text-[11px] text-zinc-400">
-                  Create a new GitHub repo
-                </p>
-              </div>
-            </div>
-
-            <Plus size={14} className="text-zinc-500" />
+            <FolderPlus size={15} className="text-[#A1A1AA]" />
+            <span>Create Repository</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setMode("manage-access")}
-            className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
+            onClick={() => handleSelectMode("manage-access")}
+            className="flex items-center justify-center gap-2 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs font-medium text-[#FAFAFA] transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/80 text-white">
-                <Users size={16} />
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold text-white">
-                  Manage Access
-                </p>
-                <p className="text-[11px] text-zinc-400">
-                  Manage repository collaborators
-                </p>
-              </div>
-            </div>
-
-            <Plus size={14} className="text-zinc-500" />
+            <Users size={15} className="text-[#A1A1AA]" />
+            <span>Manage Access</span>
           </button>
         </div>
       )}
 
-      {/* Success View */}
+      {/* Success View for Create Repository */}
       {mode === "create-repo" && createdRepo && (
         <div className="space-y-3 rounded-lg border border-emerald-900/60 bg-emerald-950/20 p-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-semibold text-emerald-400">
-                Repository created
-              </p>
-              <h3 className="mt-0.5 text-sm font-semibold text-white">
-                {createdRepo.full_name}
-              </h3>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => chrome.tabs.create({ url: createdRepo.html_url })}
-              className="flex items-center gap-1 rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-emerald-500"
-            >
-              <ExternalLink size={12} />
-              Open
-            </button>
+          <div className="flex items-center gap-2 text-emerald-400">
+            <Check size={16} />
+            <span className="text-xs font-semibold">Repository created</span>
           </div>
 
-          {/* Terminal Remote Commands */}
-          <div className="space-y-1.5 pt-1">
-            <p className="text-[11px] font-medium text-zinc-400">
-              Terminal remote commands:
-            </p>
+          <p className="text-xs text-[#FAFAFA] font-medium truncate">
+            {createdRepo.full_name}
+          </p>
 
-            {/* HTTPS commands */}
-            <div className="rounded-md border border-zinc-800 bg-zinc-950/80 p-2 text-[10px]">
-              <div className="flex items-center justify-between text-zinc-400">
-                <span className="font-medium text-zinc-300">HTTPS</span>
+          <button
+            type="button"
+            onClick={handleOpenRepo}
+            className="flex h-7 w-full items-center justify-center gap-1.5 rounded-md border border-[#27272A] bg-[#0F0F11] text-xs font-medium text-[#FAFAFA] transition-colors hover:bg-[#18181B] cursor-pointer"
+          >
+            <span>Open Repository</span>
+            <ExternalLink size={12} className="text-[#A1A1AA]" />
+          </button>
+
+          {/* Quick copy clone commands */}
+          <div className="space-y-2 pt-1">
+            <div className="rounded-md border border-[#27272A] bg-[#090A0F] p-2 text-[10px]">
+              <div className="flex items-center justify-between text-[#A1A1AA]">
+                <span className="font-medium text-[#FAFAFA]">HTTPS</span>
                 <button
                   type="button"
                   onClick={() => copyCommands("https")}
-                  className="flex items-center gap-1 text-[10px] text-zinc-400 transition hover:text-white"
+                  className="flex items-center gap-1 text-[10px] text-[#A1A1AA] transition-colors hover:text-[#FAFAFA] cursor-pointer"
                 >
                   {copiedProtocol === "https" ? (
                     <>
-                      <Check size={11} className="text-emerald-400" />
+                      <Check size={10} className="text-emerald-400" />
                       <span className="text-emerald-400">Copied!</span>
                     </>
                   ) : (
                     <>
-                      <Copy size={11} />
+                      <Copy size={10} />
                       <span>Copy</span>
                     </>
                   )}
                 </button>
               </div>
-
-              <code className="mt-1 block font-mono text-zinc-400">
+              <code className="mt-1 block font-mono text-[#71717A] text-[10px]">
                 git remote add origin {createdRepo.clone_url}
-                <br />
-                git push -u origin main
               </code>
             </div>
 
-            {/* SSH commands */}
-            <div className="rounded-md border border-zinc-800 bg-zinc-950/80 p-2 text-[10px]">
-              <div className="flex items-center justify-between text-zinc-400">
-                <span className="font-medium text-zinc-300">SSH</span>
+            <div className="rounded-md border border-[#27272A] bg-[#090A0F] p-2 text-[10px]">
+              <div className="flex items-center justify-between text-[#A1A1AA]">
+                <span className="font-medium text-[#FAFAFA]">SSH</span>
                 <button
                   type="button"
                   onClick={() => copyCommands("ssh")}
-                  className="flex items-center gap-1 text-[10px] text-zinc-400 transition hover:text-white"
+                  className="flex items-center gap-1 text-[10px] text-[#A1A1AA] transition-colors hover:text-[#FAFAFA] cursor-pointer"
                 >
                   {copiedProtocol === "ssh" ? (
                     <>
-                      <Check size={11} className="text-emerald-400" />
+                      <Check size={10} className="text-emerald-400" />
                       <span className="text-emerald-400">Copied!</span>
                     </>
                   ) : (
                     <>
-                      <Copy size={11} />
+                      <Copy size={10} />
                       <span>Copy</span>
                     </>
                   )}
                 </button>
               </div>
-
-              <code className="mt-1 block font-mono text-zinc-400">
+              <code className="mt-1 block font-mono text-[#71717A] text-[10px]">
                 git remote add origin {createdRepo.ssh_url}
-                <br />
-                git push -u origin main
               </code>
             </div>
           </div>
@@ -259,7 +239,7 @@ export function QuickActions() {
             <button
               type="button"
               onClick={handleClose}
-              className="rounded border border-zinc-800 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              className="rounded-md border border-[#27272A] bg-[#0F0F11] px-3 py-1 text-xs font-medium text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
             >
               Done
             </button>
@@ -271,72 +251,68 @@ export function QuickActions() {
       {mode === "create-repo" && !createdRepo && (
         <form
           onSubmit={handleSubmit}
-          className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3"
+          className="space-y-3 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3"
         >
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-white">
-              Create a new repository
+          <div className="flex items-center justify-between border-b border-[#27272A] pb-2">
+            <h3 className="text-xs font-semibold text-[#FAFAFA]">
+              Create Repository
             </h3>
             <button
               type="button"
               onClick={handleClose}
-              className="text-xs text-zinc-500 transition hover:text-zinc-300"
+              className="text-xs text-[#71717A] transition-colors hover:text-[#FAFAFA] cursor-pointer"
             >
               Cancel
             </button>
           </div>
 
-          {/* Validation or API error */}
           {(validationError || apiError) && (
             <p className="rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
               {validationError || apiError}
             </p>
           )}
 
-          {/* Repository Name */}
           <div>
-            <label className="mb-1 block text-[11px] text-zinc-400">
+            <label className="mb-1 block text-[11px] text-[#A1A1AA]">
               Repository name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
-              placeholder="e.g., my-awesome-project"
+              placeholder="e.g., solohub-extension"
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
                 if (validationError) setValidationError(null);
               }}
               disabled={createMutation.isPending}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-white outline-none placeholder:text-zinc-600 focus:border-zinc-600 disabled:opacity-50"
+              className="h-8 w-full rounded-md border border-[#27272A] bg-[#090A0F] px-2.5 text-xs text-[#FAFAFA] placeholder-[#71717A] outline-none focus:border-[#3F3F46] disabled:opacity-50"
             />
           </div>
 
-          {/* Description */}
           <div>
-            <label className="mb-1 block text-[11px] text-zinc-400">
-              Description <span className="text-zinc-600">(optional)</span>
+            <label className="mb-1 block text-[11px] text-[#A1A1AA]">
+              Description <span className="text-[#71717A]">(optional)</span>
             </label>
             <input
               type="text"
-              placeholder="Short description of your project"
+              placeholder="Brief description of the repository"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={createMutation.isPending}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-white outline-none placeholder:text-zinc-600 focus:border-zinc-600 disabled:opacity-50"
+              className="h-8 w-full rounded-md border border-[#27272A] bg-[#090A0F] px-2.5 text-xs text-[#FAFAFA] placeholder-[#71717A] outline-none focus:border-[#3F3F46] disabled:opacity-50"
             />
           </div>
 
-          {/* Visibility Options */}
           <div>
-            <label className="mb-1 block text-[11px] text-zinc-400">
+            <label className="mb-1 block text-[11px] text-[#A1A1AA]">
               Visibility
             </label>
             <div className="grid grid-cols-2 gap-2">
               <label
-                className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs transition ${
+                className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs transition-colors ${
                   !isPrivate
-                    ? "border-white/40 bg-zinc-800/80 text-white"
-                    : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    ? "border-[#FAFAFA] bg-[#18181B] text-[#FAFAFA]"
+                    : "border-[#27272A] bg-[#090A0F] text-[#71717A] hover:border-[#3F3F46]"
                 }`}
               >
                 <input
@@ -351,10 +327,10 @@ export function QuickActions() {
               </label>
 
               <label
-                className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs transition ${
+                className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs transition-colors ${
                   isPrivate
-                    ? "border-white/40 bg-zinc-800/80 text-white"
-                    : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    ? "border-[#FAFAFA] bg-[#18181B] text-[#FAFAFA]"
+                    : "border-[#27272A] bg-[#090A0F] text-[#71717A] hover:border-[#3F3F46]"
                 }`}
               >
                 <input
@@ -370,25 +346,23 @@ export function QuickActions() {
             </div>
           </div>
 
-          {/* Initialize with README */}
-          <label className="flex cursor-pointer items-center gap-2 pt-1 text-xs text-zinc-300">
+          <label className="flex cursor-pointer items-center gap-2 pt-1 text-xs text-[#A1A1AA]">
             <input
               type="checkbox"
               checked={autoInit}
               onChange={(e) => setAutoInit(e.target.checked)}
               disabled={createMutation.isPending}
-              className="h-3.5 w-3.5 rounded border-zinc-700 bg-zinc-950 text-white accent-white"
+              className="h-3.5 w-3.5 rounded border-[#27272A] bg-[#090A0F] accent-white"
             />
             <span>Initialize with README</span>
           </label>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-1">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#27272A]">
             <button
               type="button"
               onClick={handleClose}
               disabled={createMutation.isPending}
-              className="rounded border border-zinc-800 px-3 py-1 text-xs text-zinc-400 transition hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+              className="rounded-md border border-[#27272A] px-3 py-1.5 text-xs text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
@@ -396,7 +370,7 @@ export function QuickActions() {
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="rounded bg-white px-3 py-1 text-xs font-medium text-black transition hover:bg-zinc-200 disabled:opacity-50"
+              className="rounded-md bg-[#FAFAFA] px-3 py-1.5 text-xs font-semibold text-[#090A0F] transition-colors hover:bg-white disabled:opacity-50 cursor-pointer"
             >
               {createMutation.isPending ? "Creating..." : "Create Repository"}
             </button>
@@ -406,8 +380,22 @@ export function QuickActions() {
 
       {/* Manage Access View */}
       {mode === "manage-access" && (
-        <CollaboratorSection onClose={handleClose} />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[#FAFAFA]">
+              Repository Access
+            </span>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="text-xs text-[#71717A] hover:text-[#FAFAFA] cursor-pointer"
+            >
+              Back
+            </button>
+          </div>
+          <CollaboratorSection onClose={handleClose} />
+        </div>
       )}
-    </section>
+    </div>
   );
 }

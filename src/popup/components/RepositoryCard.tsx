@@ -14,26 +14,23 @@ interface RepositoryCardProps {
   repository: GitHubRepository;
 }
 
-export function RepositoryCard({
-  repository,
-}: RepositoryCardProps) {
+export function RepositoryCard({ repository }: RepositoryCardProps) {
   const [copied, setCopied] = useState<string | null>(null);
 
-  async function copyToClipboard(
-    value: string,
-    type: string
-  ) {
+  async function copyToClipboard(value: string, type: string) {
     await navigator.clipboard.writeText(value);
-
     setCopied(type);
-
     setTimeout(() => {
       setCopied(null);
     }, 1500);
   }
 
   function openUrl(url: string) {
-    chrome.tabs.create({ url });
+    if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+      chrome.tabs.create({ url });
+    } else {
+      window.open(url, "_blank");
+    }
   }
 
   const issuesUrl = `${repository.html_url}/issues`;
@@ -41,103 +38,119 @@ export function RepositoryCard({
   const createIssueUrl = `${repository.html_url}/issues/new`;
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+    <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 transition-colors hover:border-[#3F3F46]">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold text-white">
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="min-w-0 flex-1">
+          <h3
+            className="truncate text-xs font-semibold text-[#FAFAFA]"
+            title={repository.name}
+          >
             {repository.name}
           </h3>
 
-          <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-            {repository.description || "No description"}
+          <p className="mt-0.5 line-clamp-2 text-[11px] text-[#A1A1AA] leading-relaxed">
+            {repository.description || "No description provided"}
           </p>
         </div>
 
-        <span className="shrink-0 rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-400">
+        <span
+          className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${
+            repository.private
+              ? "border-[#3F3F46] bg-[#18181B] text-[#A1A1AA]"
+              : "border-blue-900/60 bg-blue-950/40 text-blue-400"
+          }`}
+        >
           {repository.private ? "Private" : "Public"}
         </span>
       </div>
 
-      {/* Stats */}
-      <div className="mt-3 flex items-center gap-3 text-xs text-zinc-500">
-        <span>{repository.language || "Unknown"}</span>
+      {/* Language, Stars & Forks */}
+      <div className="mt-2.5 flex items-center gap-3 text-[11px] text-[#71717A]">
+        {repository.language && (
+          <span className="flex items-center gap-1 text-[#A1A1AA]">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            {repository.language}
+          </span>
+        )}
 
         <span className="flex items-center gap-1">
-          <Star size={12} />
-          {repository.stargazers_count}
+          <Star size={11} />
+          <span>{repository.stargazers_count}</span>
         </span>
 
         <span className="flex items-center gap-1">
-          <GitFork size={12} />
-          {repository.forks_count}
+          <GitFork size={11} />
+          <span>{repository.forks_count}</span>
         </span>
       </div>
 
-      {/* Main action */}
+      {/* Main Action: Open Repository */}
       <button
+        type="button"
         onClick={() => openUrl(repository.html_url)}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+        className="mt-2.5 flex h-7 w-full items-center justify-center gap-1.5 rounded-md border border-[#27272A] bg-[#090A0F] px-3 text-xs font-medium text-[#FAFAFA] transition-colors hover:bg-[#18181B] active:scale-[0.99] cursor-pointer"
       >
-        Open Repository
-        <ExternalLink size={13} />
+        <span>Open Repository</span>
+        <ExternalLink size={12} className="text-[#A1A1AA]" />
       </button>
 
-      {/* Quick actions */}
-      <div className="mt-2 grid grid-cols-3 gap-2">
+      {/* Quick Links: Issues, PRs, New Issue */}
+      <div className="mt-1.5 grid grid-cols-3 gap-1.5">
         <button
+          type="button"
           onClick={() => openUrl(issuesUrl)}
-          className="flex items-center justify-center gap-1 rounded-md border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-6 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F]/60 px-1 text-[10px] font-medium text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
         >
-          <CircleDot size={12} />
-          Issues
+          <CircleDot size={10} />
+          <span>Issues</span>
         </button>
 
         <button
+          type="button"
           onClick={() => openUrl(pullRequestsUrl)}
-          className="flex items-center justify-center gap-1 rounded-md border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-6 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F]/60 px-1 text-[10px] font-medium text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
         >
-          <GitPullRequest size={12} />
-          PRs
+          <GitPullRequest size={10} />
+          <span>PRs</span>
         </button>
 
         <button
+          type="button"
           onClick={() => openUrl(createIssueUrl)}
-          className="flex items-center justify-center gap-1 rounded-md border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-6 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F]/60 px-1 text-[10px] font-medium text-[#A1A1AA] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
         >
-          <CircleDot size={12} />
-          New Issue
+          <CircleDot size={10} className="text-emerald-400" />
+          <span>New Issue</span>
         </button>
       </div>
 
-      {/* Clone URLs */}
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      {/* Clone Protocols: HTTPS & SSH */}
+      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
         <button
-          onClick={() =>
-            copyToClipboard(repository.clone_url, "https")
-          }
-          className="flex items-center justify-center gap-1 rounded-md border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
+          type="button"
+          onClick={() => copyToClipboard(repository.clone_url, "https")}
+          className="flex h-6 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F]/60 px-1 text-[10px] text-[#71717A] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
         >
           {copied === "https" ? (
-            <Check size={12} />
+            <Check size={10} className="text-emerald-400" />
           ) : (
-            <Copy size={12} />
+            <Copy size={10} />
           )}
-          {copied === "https" ? "Copied" : "HTTPS"}
+          <span>{copied === "https" ? "Copied HTTPS" : "HTTPS"}</span>
         </button>
 
         <button
-          onClick={() =>
-            copyToClipboard(repository.ssh_url, "ssh")
-          }
-          className="flex items-center justify-center gap-1 rounded-md border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
+          type="button"
+          onClick={() => copyToClipboard(repository.ssh_url, "ssh")}
+          className="flex h-6 items-center justify-center gap-1 rounded-md border border-[#27272A] bg-[#090A0F]/60 px-1 text-[10px] text-[#71717A] transition-colors hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
         >
           {copied === "ssh" ? (
-            <Check size={12} />
+            <Check size={10} className="text-emerald-400" />
           ) : (
-            <Copy size={12} />
+            <Copy size={10} />
           )}
-          {copied === "ssh" ? "Copied" : "SSH"}
+          <span>{copied === "ssh" ? "Copied SSH" : "SSH"}</span>
         </button>
       </div>
     </div>

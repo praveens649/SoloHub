@@ -62,45 +62,45 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     filteredIssues.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden mt-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/75 p-4 backdrop-blur-xs animate-in fade-in duration-100">
+      <div className="w-full max-w-sm rounded-xl border border-[#27272A] bg-[#090A0F] shadow-2xl overflow-hidden mt-6">
         {/* Search Header */}
-        <div className="flex items-center gap-2 border-b border-zinc-800 px-3 py-2.5 bg-zinc-900/60">
-          <Search size={16} className="text-zinc-400" />
+        <div className="flex items-center gap-2 border-b border-[#27272A] px-3 py-2.5 bg-[#0F0F11]">
+          <Search size={15} className="text-[#71717A]" />
           <input
             type="text"
             autoFocus
             placeholder="Search repos, pull requests, issues..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-xs text-white placeholder-zinc-500 focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none"
           />
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+            className="rounded p-1 text-[#71717A] hover:bg-[#18181B] hover:text-[#FAFAFA] cursor-pointer"
           >
-            <X size={15} />
+            <X size={14} />
           </button>
         </div>
 
         {/* Results Container */}
-        <div className="max-h-[360px] overflow-y-auto p-3 space-y-3">
+        <div className="max-h-[340px] overflow-y-auto p-3 space-y-3">
           {!query.trim() && (
-            <div className="py-6 text-center text-xs text-zinc-500">
-              Type to instantly search across all repositories, open PRs, and issues.
+            <div className="py-6 text-center text-xs text-[#71717A]">
+              Type to search repositories, open PRs, and issues.
             </div>
           )}
 
           {query.trim() && !hasResults && (
-            <div className="py-6 text-center text-xs text-zinc-500">
-              No matching items found for "{query}".
+            <div className="py-6 text-center text-xs text-[#71717A]">
+              No items matching "{query}".
             </div>
           )}
 
           {filteredRepos.length > 0 && (
             <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">
                 Repositories
               </p>
               <div className="space-y-1">
@@ -108,13 +108,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   <button
                     key={repo.id}
                     onClick={() => handleOpenUrl(repo.html_url)}
-                    className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition"
+                    className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs text-[#A1A1AA] hover:bg-[#0F0F11] hover:text-[#FAFAFA] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <FolderGit2 size={14} className="text-zinc-400 shrink-0" />
+                      <FolderGit2 size={13} className="text-[#71717A] shrink-0" />
                       <span className="truncate font-medium">{repo.name}</span>
                     </div>
-                    <ExternalLink size={12} className="text-zinc-500 shrink-0" />
+                    <ExternalLink size={11} className="text-[#71717A] shrink-0" />
                   </button>
                 ))}
               </div>
@@ -123,7 +123,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
           {filteredPRs.length > 0 && (
             <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">
                 Pull Requests
               </p>
               <div className="space-y-1">
@@ -131,13 +131,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   <button
                     key={pr.id}
                     onClick={() => handleOpenUrl(pr.html_url)}
-                    className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition"
+                    className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs text-[#A1A1AA] hover:bg-[#0F0F11] hover:text-[#FAFAFA] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <GitPullRequest size={14} className="text-emerald-400 shrink-0" />
+                      <GitPullRequest size={13} className="text-blue-400 shrink-0" />
                       <span className="truncate font-medium">{pr.title}</span>
                     </div>
-                    <ExternalLink size={12} className="text-zinc-500 shrink-0" />
+                    <ExternalLink size={11} className="text-[#71717A] shrink-0" />
                   </button>
                 ))}
               </div>
@@ -146,7 +146,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
           {filteredIssues.length > 0 && (
             <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">
                 Issues
               </p>
               <div className="space-y-1">
@@ -154,13 +154,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   <button
                     key={issue.id}
                     onClick={() => handleOpenUrl(issue.html_url)}
-                    className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition"
+                    className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs text-[#A1A1AA] hover:bg-[#0F0F11] hover:text-[#FAFAFA] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <CircleDot size={14} className="text-amber-400 shrink-0" />
+                      <CircleDot size={13} className="text-amber-400 shrink-0" />
                       <span className="truncate font-medium">{issue.title}</span>
                     </div>
-                    <ExternalLink size={12} className="text-zinc-500 shrink-0" />
+                    <ExternalLink size={11} className="text-[#71717A] shrink-0" />
                   </button>
                 ))}
               </div>
