@@ -1,12 +1,51 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
+@layer base {
+  :root {
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-width: 380px;
+    width: 100%;
+    min-height: 580px;
+    background-color: #090a0f;
+    color: #f4f4f5;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  /* Custom sleek dark scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+  }
 }
 
-body {
-  margin: 0;
-  min-width: 380px;
-  min-height: 500px;
-  font-family: Inter, system-ui, sans-serif;
+/* Subtle glow utilities */
+.glow-terminal {
+  box-shadow: 0 0 35px -5px rgba(255, 255, 255, 0.08);
+}
+
+.glow-subtle {
+  box-shadow: 0 0 20px -2px rgba(255, 255, 255, 0.05);
 }
