@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useRepositories } from "../hooks/useRepositories";
 import { RepositoryCard } from "../components/RepositoryCard";
 import { GitHubRateLimitMessage } from "../components/GitHubRateLimitMessage";
@@ -6,9 +6,22 @@ import { Search } from "lucide-react";
 
 export type RepoFilter = "all" | "public" | "private" | "starred";
 
-export function RepositoriesPage() {
+interface RepositoriesPageProps {
+  autoFocusSearch?: boolean;
+}
+
+export function RepositoriesPage({ autoFocusSearch = false }: RepositoriesPageProps) {
   const [filter, setFilter] = useState<RepoFilter>("all");
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocusSearch) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [autoFocusSearch]);
 
   // Hook handles starred query parameter directly
   const {
@@ -53,6 +66,7 @@ export function RepositoriesPage() {
           className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#71717A]"
         />
         <input
+          ref={searchInputRef}
           type="text"
           placeholder="Search repositories..."
           value={search}

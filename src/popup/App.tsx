@@ -8,20 +8,24 @@ import { RepositoriesPage } from "./pages/RepositoriesPage";
 import { ExecPage } from "./pages/ExecPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { HomeHero } from "./components/HomeHero";
-import { SearchModal } from "./components/SearchModal";
+import { CommandPalette } from "./components/command/CommandPalette";
+import { NewIssueForm } from "./components/NewIssueForm";
 import { getAuth, setAuth, clearAuth } from "../lib/storage/auth";
 import { getGitHubUser, GitHubApiError } from "../lib/github/client";
 import type { GitHubUser } from "../lib/github/types";
 import { usePullRequests } from "./hooks/usePullRequests";
 import { useIssues } from "./hooks/useIssues";
 import { useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 
 function App() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [currentPage, setCurrentPage] = useState<NavPage>("home");
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [newIssueModalOpen, setNewIssueModalOpen] = useState(false);
+  const [reposFocusSearch, setReposFocusSearch] = useState(false);
   const [execInitialMode, setExecInitialMode] = useState<"none" | "create-repo" | "manage-access">("none");
 
   const queryClient = useQueryClient();
@@ -75,15 +79,19 @@ function App() {
 
   // Global keyboard shortcuts (Ctrl+K or Cmd+K)
   useEffect(() => {
+    if (!authenticated) return;
+
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setSearchOpen((prev) => !prev);
+        setCommandPaletteOpen((prev) => !prev);
       }
     }
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [authenticated]);
 
   // Fetch counts for badges only when authenticated
   const { data: openPRs } = usePullRequests("open");
@@ -108,13 +116,23 @@ function App() {
 
   function handleNavigate(
     page: NavPage,
-    state?: { execMode?: "none" | "create-repo" | "manage-access" }
+    state?: {
+      execMode?: "none" | "create-repo" | "manage-access";
+      focusSearch?: boolean;
+    }
   ) {
     if (state?.execMode) {
       setExecInitialMode(state.execMode);
     } else {
       setExecInitialMode("none");
     }
+
+    if (state?.focusSearch) {
+      setReposFocusSearch(true);
+    } else {
+      setReposFocusSearch(false);
+    }
+
     setCurrentPage(page);
   }
 
@@ -137,27 +155,33 @@ function App() {
     );
   }
 
-  // 3. Authenticated App Experience (AppShell + Pages + BottomNav)
+  // 3. Authenticated App Experience (AppShell + Pages + BottomNav + Command Palette)
   return (
     <>
       <AppShell
         user={user}
         currentPage={currentPage}
         onSelectPage={(page) => handleNavigate(page)}
-        onOpenSearch={() => setSearchOpen(true)}
+        onOpenSearch={() => setCommandPaletteOpen((prev) => !prev)}
         onDisconnect={handleDisconnect}
         inboxCount={inboxCount}
         prsCount={prsCount}
       >
         {currentPage === "home" && (
-          <HomePage user={user} onNavigate={handleNavigate} />
+          <HomePage
+            user={user}
+            onNavigate={handleNavigate}
+            onOpenNewIssue={() => setNewIssueModalOpen(true)}
+          />
         )}
 
         {currentPage === "inbox" && <InboxPage />}
 
         {currentPage === "prs" && <PullRequestsPage />}
 
-        {currentPage === "repos" && <RepositoriesPage />}
+        {currentPage === "repos" && (
+          <RepositoriesPage autoFocusSearch={reposFocusSearch} />
+        )}
 
         {currentPage === "exec" && <ExecPage initialMode={execInitialMode} />}
 
@@ -170,11 +194,32 @@ function App() {
         )}
       </AppShell>
 
-      {/* Global Search Dialog */}
-      <SearchModal
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onNavigate={handleNavigate}
+        onOpenNewIssue={() => setNewIssueModalOpen(true)}
       />
+
+      {/* Global New Issue Modal */}
+      {newIssueModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs animate-in fade-in duration-100">
+          <div className="w-full max-w-sm rounded-xl border border-[#27272A] bg-[#0F0F11] p-3 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#27272A] pb-2 mb-3">
+              <h3 className="text-xs font-semibold text-white">Create GitHub Issue</h3>
+              <button
+                type="button"
+                onClick={() => setNewIssueModalOpen(false)}
+                className="rounded p-1 text-[#71717A] hover:bg-[#18181B] hover:text-white cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <NewIssueForm onClose={() => setNewIssueModalOpen(false)} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

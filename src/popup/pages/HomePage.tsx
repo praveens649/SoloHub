@@ -11,10 +11,19 @@ import { FolderPlus, CircleDot, Users, X } from "lucide-react";
 interface HomePageProps {
   user: GitHubUser | null;
   onNavigate: (page: NavPage, state?: { execMode?: "none" | "create-repo" | "manage-access" }) => void;
+  onOpenNewIssue?: () => void;
 }
 
-export function HomePage({ user, onNavigate }: HomePageProps) {
+export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
   const [showIssueModal, setShowIssueModal] = useState(false);
+
+  function handleCreateIssueClick() {
+    if (onOpenNewIssue) {
+      onOpenNewIssue();
+    } else {
+      setShowIssueModal(true);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -72,7 +81,7 @@ export function HomePage({ user, onNavigate }: HomePageProps) {
           {/* Create Issue */}
           <button
             type="button"
-            onClick={() => setShowIssueModal(true)}
+            onClick={handleCreateIssueClick}
             className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2.5 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
           >
             <CircleDot size={15} className="text-[#A1A1AA]" />
