@@ -10,6 +10,15 @@ export interface GitHubAuthState {
   authenticated: boolean;
   user: GitHubUser | null;
 }
+export interface GitHubOrganization {
+  id: number;
+  login: string;
+  avatar_url: string;
+  description: string | null;
+  url?: string;
+  html_url?: string;
+}
+
 export interface GitHubRepository {
   id: number;
   name: string;
@@ -27,6 +36,11 @@ export interface GitHubRepository {
   owner: {
     login: string;
     avatar_url: string;
+    type?: string;
+  };
+  organization?: {
+    login: string;
+    avatar_url?: string;
   };
 }
 

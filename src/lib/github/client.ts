@@ -2,6 +2,7 @@ import type {
   CollaboratorPermission,
   GitHubCollaborator,
   GitHubCollaboratorInvitation,
+  GitHubOrganization,
   GitHubRepository,
 } from "./types";
 import {
@@ -186,21 +187,116 @@ export async function fetchPaginated<T>(
   return { data: allItems, hasMore };
 }
 
+export async function getUserOrganizations(
+  token: string
+): Promise<GitHubOrganization[]> {
+  return githubFetch<GitHubOrganization[]>("/user/orgs?per_page=100", token);
+}
+
+export async function getOrganizationRepositories(
+  token: string,
+  org: string,
+  maxPages = 2
+): Promise<GitHubRepository[]> {
+  const { data } = await fetchPaginated<GitHubRepository>(
+    `/orgs/${encodeURIComponent(org)}/repos?sort=updated&direction=desc`,
+    token,
+    {
+      perPage: 100,
+      maxPages,
+    }
+  );
+  return data;
+}
+
+export interface GetRepositoriesOptions {
+  includeOrgs?: boolean;
+  org?: string;
+}
+
 export async function getRepositories(
   token: string,
   starred = false,
-  maxPages = 2
+  maxPages = 2,
+  options: GetRepositoriesOptions = {}
 ): Promise<GitHubRepository[]> {
-  const endpoint = starred
-    ? "/user/starred?sort=updated&direction=desc"
-    : "/user/repos?sort=updated&direction=desc";
+  if (options.org) {
+    return getOrganizationRepositories(token, options.org, maxPages);
+  }
 
-  const { data } = await fetchPaginated<GitHubRepository>(endpoint, token, {
-    perPage: 100,
-    maxPages,
-  });
+  if (starred) {
+    const { data } = await fetchPaginated<GitHubRepository>(
+      "/user/starred?sort=updated&direction=desc",
+      token,
+      {
+        perPage: 100,
+        maxPages,
+      }
+    );
+    return data;
+  }
 
-  return data;
+  // Explicitly request owner, collaborator, and organization_member repos
+  const userReposEndpoint =
+    "/user/repos?sort=updated&direction=desc&affiliation=owner,collaborator,organization_member";
+
+  const { data: userRepos } = await fetchPaginated<GitHubRepository>(
+    userReposEndpoint,
+    token,
+    {
+      perPage: 100,
+      maxPages,
+    }
+  );
+
+  if (options.includeOrgs === false) {
+    return userRepos;
+  }
+
+  // Also query the user's organizations to discover all accessible organization repos
+  try {
+    const orgs = await getUserOrganizations(token);
+    if (!orgs || orgs.length === 0) {
+      return userRepos;
+    }
+
+    // Fetch repositories for user's organizations (up to 10 organizations)
+    const orgResults = await Promise.allSettled(
+      orgs.slice(0, 10).map((org) =>
+        getOrganizationRepositories(token, org.login, 1)
+      )
+    );
+
+    const orgRepos: GitHubRepository[] = [];
+    for (const res of orgResults) {
+      if (res.status === "fulfilled" && Array.isArray(res.value)) {
+        orgRepos.push(...res.value);
+      }
+    }
+
+    if (orgRepos.length === 0) {
+      return userRepos;
+    }
+
+    // Merge and deduplicate by repository ID
+    const repoMap = new Map<number, GitHubRepository>();
+    for (const repo of userRepos) {
+      repoMap.set(repo.id, repo);
+    }
+    for (const repo of orgRepos) {
+      if (!repoMap.has(repo.id)) {
+        repoMap.set(repo.id, repo);
+      }
+    }
+
+    return Array.from(repoMap.values()).sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
+  } catch (err) {
+    console.warn("Failed to fetch organization repositories:", err);
+    return userRepos;
+  }
 }
 
 export async function githubFetch<T>(
@@ -421,14 +517,19 @@ export interface CreateRepositoryParams {
   description?: string;
   private?: boolean;
   autoInit?: boolean;
+  org?: string;
 }
 
 export async function createRepository(
   token: string,
   params: CreateRepositoryParams
 ): Promise<GitHubRepository> {
+  const endpoint = params.org
+    ? `/orgs/${encodeURIComponent(params.org)}/repos`
+    : "/user/repos";
+
   return githubFetch<GitHubRepository>(
-    "/user/repos",
+    endpoint,
     token,
     {
       method: "POST",

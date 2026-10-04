@@ -1,4 +1,5 @@
 import {
+  Building2,
   Check,
   CircleDot,
   Copy,
@@ -12,10 +13,24 @@ import type { GitHubRepository } from "../../lib/github/types";
 
 interface RepositoryCardProps {
   repository: GitHubRepository;
+  currentUserLogin?: string | null;
+  isOrg?: boolean;
 }
 
-export function RepositoryCard({ repository }: RepositoryCardProps) {
+export function RepositoryCard({
+  repository,
+  currentUserLogin,
+  isOrg,
+}: RepositoryCardProps) {
   const [copied, setCopied] = useState<string | null>(null);
+
+  const isOrgRepo =
+    isOrg ??
+    (repository.owner?.type === "Organization" ||
+      Boolean(repository.organization) ||
+      (currentUserLogin &&
+        repository.owner?.login?.toLowerCase() !==
+          currentUserLogin.toLowerCase()));
 
   async function copyToClipboard(value: string, type: string) {
     await navigator.clipboard.writeText(value);
@@ -42,9 +57,37 @@ export function RepositoryCard({ repository }: RepositoryCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between gap-2.5">
         <div className="min-w-0 flex-1">
+          {/* Organization indicator */}
+          {isOrgRepo && repository.owner && (
+            <div className="mb-1 flex items-center gap-1.5">
+              {repository.owner.avatar_url ? (
+                <img
+                  src={repository.owner.avatar_url}
+                  alt={repository.owner.login}
+                  className="h-3.5 w-3.5 rounded-full border border-[#27272A] object-cover"
+                />
+              ) : (
+                <Building2 size={12} className="text-[#A1A1AA]" />
+              )}
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openUrl(`https://github.com/${repository.owner.login}`);
+                }}
+                className="truncate text-[10px] font-medium text-[#A1A1AA] hover:text-[#FAFAFA] hover:underline cursor-pointer"
+                title={`Organization: ${repository.owner.login}`}
+              >
+                {repository.owner.login}
+              </span>
+              <span className="rounded border border-purple-800/40 bg-purple-950/40 px-1 py-0.2 text-[8px] font-semibold tracking-wide text-purple-300">
+                ORG
+              </span>
+            </div>
+          )}
+
           <h3
             className="truncate text-xs font-semibold text-[#FAFAFA]"
-            title={repository.name}
+            title={repository.full_name || repository.name}
           >
             {repository.name}
           </h3>

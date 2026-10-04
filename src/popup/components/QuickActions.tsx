@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useCreateRepository } from "../hooks/useRepositories";
+import { useOrganizations } from "../hooks/useOrganizations";
 import { CollaboratorSection } from "./CollaboratorSection";
 import type { GitHubRepository } from "../../lib/github/types";
 import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
@@ -28,6 +29,7 @@ export function QuickActions({
   const [mode, setMode] = useState<QuickActionMode>(initialMode);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedOwner, setSelectedOwner] = useState<string>("personal");
   const [isPrivate, setIsPrivate] = useState(false);
   const [autoInit, setAutoInit] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function QuickActions({
   );
 
   const toast = useToast();
+  const { data: organizations } = useOrganizations();
 
   useEffect(() => {
     if (initialMode) {
@@ -50,6 +53,7 @@ export function QuickActions({
   function resetForm() {
     setName("");
     setDescription("");
+    setSelectedOwner("personal");
     setIsPrivate(false);
     setAutoInit(true);
     setValidationError(null);
@@ -88,12 +92,13 @@ export function QuickActions({
         description: description.trim() || undefined,
         private: isPrivate,
         autoInit,
+        org: selectedOwner !== "personal" ? selectedOwner : undefined,
       });
 
       setCreatedRepo(repo);
       toast.success("✓ Repository created");
     } catch (err) {
-      let message = "Unable to create repository.";
+      let message: string;
       if (err instanceof GitHubApiError) {
         if (err.isRateLimit) {
           message = err.getFriendlyMessage();
@@ -275,6 +280,27 @@ export function QuickActions({
             <p className="rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
               {validationError || apiError}
             </p>
+          )}
+
+          {organizations && organizations.length > 0 && (
+            <div>
+              <label className="mb-1 block text-[11px] text-[#A1A1AA]">
+                Owner
+              </label>
+              <select
+                value={selectedOwner}
+                onChange={(e) => setSelectedOwner(e.target.value)}
+                disabled={createMutation.isPending}
+                className="h-8 w-full rounded-md border border-[#27272A] bg-[#090A0F] px-2 text-xs text-[#FAFAFA] outline-none focus:border-[#3F3F46] cursor-pointer"
+              >
+                <option value="personal">Personal Account</option>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.login}>
+                    Organization: @{org.login}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           <div>

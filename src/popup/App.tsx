@@ -4,7 +4,7 @@ import { type NavPage } from "./components/layout/BottomNav";
 import { HomePage } from "./pages/HomePage";
 import { InboxPage } from "./pages/InboxPage";
 import { PullRequestsPage } from "./pages/PullRequestsPage";
-import { RepositoriesPage } from "./pages/RepositoriesPage";
+import { RepositoriesPage, type RepoFilter } from "./pages/RepositoriesPage";
 import { ExecPage } from "./pages/ExecPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { HomeHero } from "./components/HomeHero";
@@ -27,6 +27,7 @@ function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [newIssueModalOpen, setNewIssueModalOpen] = useState(false);
   const [reposFocusSearch, setReposFocusSearch] = useState(false);
+  const [reposInitialFilter, setReposInitialFilter] = useState<RepoFilter>("all");
   const [execInitialMode, setExecInitialMode] = useState<"none" | "create-repo" | "manage-access">("none");
 
   const queryClient = useQueryClient();
@@ -120,6 +121,7 @@ function App() {
     state?: {
       execMode?: "none" | "create-repo" | "manage-access";
       focusSearch?: boolean;
+      repoFilter?: RepoFilter;
     }
   ) {
     if (state?.execMode) {
@@ -132,6 +134,12 @@ function App() {
       setReposFocusSearch(true);
     } else {
       setReposFocusSearch(false);
+    }
+
+    if (state?.repoFilter) {
+      setReposInitialFilter(state.repoFilter);
+    } else {
+      setReposInitialFilter("all");
     }
 
     setCurrentPage(page);
@@ -181,7 +189,10 @@ function App() {
         {currentPage === "prs" && <PullRequestsPage />}
 
         {currentPage === "repos" && (
-          <RepositoriesPage autoFocusSearch={reposFocusSearch} />
+          <RepositoriesPage
+            autoFocusSearch={reposFocusSearch}
+            initialFilter={reposInitialFilter}
+          />
         )}
 
         {currentPage === "exec" && <ExecPage initialMode={execInitialMode} />}

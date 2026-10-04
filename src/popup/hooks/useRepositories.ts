@@ -6,9 +6,24 @@ import {
   type CreateRepositoryParams,
 } from "../../lib/github/client";
 
-export function useRepositories(starred = false) {
+export interface UseRepositoriesOptions {
+  starred?: boolean;
+  org?: string;
+  includeOrgs?: boolean;
+}
+
+export function useRepositories(
+  starredOrOptions: boolean | UseRepositoriesOptions = false
+) {
+  const options: UseRepositoriesOptions =
+    typeof starredOrOptions === "boolean"
+      ? { starred: starredOrOptions }
+      : starredOrOptions;
+
+  const { starred = false, org, includeOrgs = true } = options;
+
   return useQuery({
-    queryKey: ["repositories", { starred }],
+    queryKey: ["repositories", { starred, org, includeOrgs }],
 
     queryFn: async () => {
       const auth = await getAuth();
@@ -17,7 +32,7 @@ export function useRepositories(starred = false) {
         throw new Error("Not authenticated");
       }
 
-      return getRepositories(auth.token, starred);
+      return getRepositories(auth.token, starred, 2, { org, includeOrgs });
     },
 
     staleTime: 5 * 60 * 1000,

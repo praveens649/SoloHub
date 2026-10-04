@@ -89,7 +89,7 @@ export function SettingsModal({ isOpen, onClose, onAuthChanged }: SettingsModalP
             <span>Update Personal Access Token</span>
           </div>
           <p className="text-[11px] text-zinc-400">
-            Paste a new GitHub PAT (with repo & read:user scopes) to reconnect or switch accounts.
+            Paste a new GitHub PAT (with repo, read:org & read:user scopes) to reconnect or switch accounts.
           </p>
           <input
             type="password"

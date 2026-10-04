@@ -12,8 +12,10 @@ import {
   Settings,
   X,
   CornerDownLeft,
+  Building2,
 } from "lucide-react";
 import type { NavPage } from "../layout/BottomNav";
+import type { RepoFilter } from "../../pages/RepositoriesPage";
 
 export type CommandGroup = "Navigation" | "Actions" | "Repository" | "Settings";
 
@@ -33,7 +35,11 @@ interface CommandPaletteProps {
   onClose: () => void;
   onNavigate: (
     page: NavPage,
-    state?: { execMode?: "none" | "create-repo" | "manage-access"; focusSearch?: boolean }
+    state?: {
+      execMode?: "none" | "create-repo" | "manage-access";
+      focusSearch?: boolean;
+      repoFilter?: RepoFilter;
+    }
   ) => void;
   onOpenNewIssue: () => void;
 }
@@ -146,6 +152,15 @@ export function CommandPalette({
         icon: Search,
         shortcut: `${shortcutModifier}K`,
         action: () => onNavigate("repos", { focusSearch: true }),
+      },
+      {
+        id: "repo-orgs",
+        label: "Organization Repositories",
+        description: "Filter and view organization repositories",
+        group: "Repository",
+        keywords: ["organization", "org", "orgs", "team", "company", "enterprise", "repos"],
+        icon: Building2,
+        action: () => onNavigate("repos", { repoFilter: "orgs" }),
       },
 
       // Settings

@@ -10,7 +10,7 @@ export async function loginWithGitHub() {
   const params = new URLSearchParams({
     client_id: GITHUB_CLIENT_ID,
     redirect_uri: redirectUri,
-    scope: "repo read:user user:email",
+    scope: "repo read:user user:email read:org",
     state,
   });
 
