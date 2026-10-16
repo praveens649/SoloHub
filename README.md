@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev/)
 [![Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-green.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
-[![License](https://img.shields.io/badge/License-Pending_Approval-orange.svg)](#license)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Solohub puts your GitHub repositories, active pull requests, issues, notifications, and productivity metrics directly into your browser toolbar. Designed specifically for solo developers, open-source maintainers, and independent creators who need fast, context-rich visibility without context-switching between tabs.
 
@@ -239,4 +239,4 @@ For vulnerability reporting and detailed security disclosures, see [SECURITY.md]
 
 ## License
 
-This project currently has a **License Decision Pending**. See [Task 6 in Phase 6 documentation](#license) or repository pull requests for details on the recommended open-source license (MIT vs. Apache-2.0).
+This project is licensed under the [MIT License](LICENSE).
