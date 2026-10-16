@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ExternalLink, GitMerge, Loader2 } from "lucide-react";
 import type { GitHubPullRequest } from "../../lib/github/client";
 import { useMergePullRequest } from "../hooks/usePullRequests";
-import { useToast } from "./feedback/ToastContext";
+import { useToast } from "./feedback/useToast";
 import { ConfirmDialog } from "./feedback/ConfirmDialog";
 import { formatGitHubError } from "../../lib/github/errors";
 

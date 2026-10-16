@@ -1,26 +1,10 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from "lucide-react";
-
-export type ToastType = "success" | "error" | "warning" | "info";
-
-export interface ToastItem {
-  id: string;
-  type: ToastType;
-  message: string;
-  duration?: number;
-}
-
-interface ToastContextValue {
-  toast: {
-    success: (message: string, duration?: number) => void;
-    error: (message: string, duration?: number) => void;
-    warning: (message: string, duration?: number) => void;
-    info: (message: string, duration?: number) => void;
-  };
-  removeToast: (id: string) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
+import {
+  ToastContext,
+  type ToastItem,
+  type ToastType,
+} from "./useToast";
 
 export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -38,7 +22,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   const addToast = useCallback(
     (type: ToastType, message: string, duration?: number) => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      
+
       // Default durations matching specifications:
       // success/info: 3000ms
       // warning/error: 4500ms
@@ -135,12 +119,4 @@ function ToastCard({
       </button>
     </div>
   );
-}
-
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a FeedbackProvider");
-  }
-  return context.toast;
 }

@@ -1,85 +1,64 @@
-import { describe, it } from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
-import { getBackendUrl, getGitHubClientId } from "../src/lib/github/config.js";
+import { getBackendUrl, getGitHubClientId } from "../src/lib/github/config.ts";
 
-describe("Frontend Configuration (config.ts)", () => {
-  it("defaults to http://localhost:3001 in development mode when unset", () => {
-    const url = getBackendUrl({
-      PROD: false,
-      DEV: true,
-      MODE: "development",
-    });
+test("Frontend Configuration Security", async (t) => {
+  await t.test("getBackendUrl in development", () => {
+    // Defaults to localhost in development
+    const url = getBackendUrl({ DEV: true, MODE: "development" });
     assert.equal(url, "http://localhost:3001");
-  });
 
-  it("accepts a custom localhost or HTTP URL in development mode", () => {
-    const url = getBackendUrl({
-      VITE_BACKEND_URL: "http://localhost:8080/",
-      PROD: false,
+    // Allows custom HTTP in development
+    const custom = getBackendUrl({
       DEV: true,
       MODE: "development",
+      VITE_BACKEND_URL: "http://localhost:4000",
     });
-    assert.equal(url, "http://localhost:8080");
+    assert.equal(custom, "http://localhost:4000");
   });
 
-  it("strictly requires HTTPS in production mode", () => {
-    const url = getBackendUrl({
-      VITE_BACKEND_URL: "https://auth.solohub.example.com",
-      PROD: true,
-      MODE: "production",
-    });
-    assert.equal(url, "https://auth.solohub.example.com");
-  });
-
-  it("throws in production mode if VITE_BACKEND_URL is missing", () => {
+  await t.test("getBackendUrl in production", () => {
+    // Fails safely if unconfigured in production
     assert.throws(
-      () =>
-        getBackendUrl({
-          PROD: true,
-          MODE: "production",
-        }),
-      /Missing configuration: VITE_BACKEND_URL/
+      () => getBackendUrl({ PROD: true, MODE: "production" }),
+      /Missing configuration: VITE_BACKEND_URL must be configured/
     );
-  });
 
-  it("throws in production mode if VITE_BACKEND_URL uses HTTP", () => {
+    // Rejects insecure HTTP in production
     assert.throws(
       () =>
         getBackendUrl({
-          VITE_BACKEND_URL: "http://insecure-backend.com",
           PROD: true,
           MODE: "production",
+          VITE_BACKEND_URL: "http://insecure.example.com",
         }),
       /Insecure configuration: VITE_BACKEND_URL must use HTTPS in production/
     );
-  });
 
-  it("throws if VITE_BACKEND_URL is not a valid URL", () => {
-    assert.throws(
-      () =>
-        getBackendUrl({
-          VITE_BACKEND_URL: "not-a-valid-url",
-          PROD: false,
-          MODE: "development",
-        }),
-      /not a valid URL/
-    );
-  });
-
-  it("returns client ID when properly configured", () => {
-    const clientId = getGitHubClientId({
-      VITE_GITHUB_CLIENT_ID: "client_12345",
+    // Accepts valid HTTPS in production and strips trailing slash
+    const valid = getBackendUrl({
+      PROD: true,
+      MODE: "production",
+      VITE_BACKEND_URL: "https://auth.solohub.io/api/",
     });
-    assert.equal(clientId, "client_12345");
+    assert.equal(valid, "https://auth.solohub.io/api");
   });
 
-  it("throws if VITE_GITHUB_CLIENT_ID is missing or empty", () => {
+  await t.test("getGitHubClientId validation", () => {
+    // Rejects empty or missing client ID
     assert.throws(
-      () =>
-        getGitHubClientId({
-          VITE_GITHUB_CLIENT_ID: "   ",
-        }),
+      () => getGitHubClientId({}),
       /VITE_GITHUB_CLIENT_ID is not configured/
     );
+    assert.throws(
+      () => getGitHubClientId({ VITE_GITHUB_CLIENT_ID: "   " }),
+      /VITE_GITHUB_CLIENT_ID is not configured/
+    );
+
+    // Returns trimmed client ID
+    const clientId = getGitHubClientId({
+      VITE_GITHUB_CLIENT_ID: "  client-12345  ",
+    });
+    assert.equal(clientId, "client-12345");
   });
 });

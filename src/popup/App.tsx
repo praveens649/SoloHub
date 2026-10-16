@@ -76,7 +76,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    checkAuth();
+    let isMounted = true;
+
+    async function init() {
+      if (isMounted) {
+        await checkAuth();
+      }
+    }
+
+    void init();
+
+    return () => {
+      isMounted = false;
+    };
   }, [checkAuth]);
 
   // Global keyboard shortcuts (Ctrl+K or Cmd+K)

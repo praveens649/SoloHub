@@ -23,13 +23,30 @@ export function getManifest(
   const hostPermissions: string[] = ["https://api.github.com/*"];
 
   if (backendUrl) {
+    let parsed: URL;
     try {
-      const parsed = new URL(backendUrl);
-      if (parsed.origin) {
-        hostPermissions.push(`${parsed.origin}/*`);
-      }
+      parsed = new URL(backendUrl);
     } catch {
-      // Ignore URL parsing errors during manifest construction
+      if (isProd) {
+        throw new Error(
+          `Invalid VITE_BACKEND_URL in production build: ${backendUrl}`
+        );
+      }
+      return defineManifest({
+        manifest_version: 3,
+        name: isProd ? "Solohub" : "Solohub (Dev)",
+        version: "0.1.0",
+      });
+    }
+
+    if (isProd && parsed.protocol !== "https:") {
+      throw new Error(
+        `Insecure backend URL protocol in production build: ${parsed.protocol}. Production requires HTTPS.`
+      );
+    }
+
+    if (parsed.origin) {
+      hostPermissions.push(`${parsed.origin}/*`);
     }
   }
 

@@ -12,7 +12,7 @@ import { useIssues, useUpdateIssueState } from "../hooks/useIssues";
 import { ErrorState } from "./feedback/ErrorState";
 import { CardSkeleton } from "./feedback/Skeletons";
 import { ConfirmDialog } from "./feedback/ConfirmDialog";
-import { useToast } from "./feedback/ToastContext";
+import { useToast } from "./feedback/useToast";
 import { formatGitHubError } from "../../lib/github/errors";
 import type { GitHubIssue, GitHubPullRequest } from "../../lib/github/client";
 

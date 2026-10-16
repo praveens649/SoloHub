@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   Search,
   House,
@@ -192,10 +192,22 @@ export function CommandPalette({
     });
   }, [commands, query]);
 
-  // Keep selected index within bounds
-  useEffect(() => {
+  // Keep selected index within bounds when query changes (adjust during render)
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
     setSelectedIndex(0);
-  }, [query]);
+  }
+
+  // Reset query and selectedIndex when palette opens (adjust during render)
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setQuery("");
+      setSelectedIndex(0);
+    }
+  }
 
   // Group the filtered commands for rendering
   const groupedCommands = useMemo(() => {
@@ -209,12 +221,10 @@ export function CommandPalette({
     return groups;
   }, [filteredCommands]);
 
-  // Focus management
+  // Focus management (pure DOM manipulation without setState in effect)
   useEffect(() => {
     if (isOpen) {
       previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
-      setQuery("");
-      setSelectedIndex(0);
       setTimeout(() => {
         inputRef.current?.focus();
       }, 20);
@@ -224,6 +234,14 @@ export function CommandPalette({
       }
     }
   }, [isOpen]);
+
+  const executeCommand = useCallback(
+    (cmd: Command) => {
+      onClose();
+      cmd.action();
+    },
+    [onClose]
+  );
 
   // Keyboard navigation inside palette
   useEffect(() => {
@@ -263,7 +281,7 @@ export function CommandPalette({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, filteredCommands, selectedIndex]);
+  }, [isOpen, filteredCommands, selectedIndex, executeCommand, onClose]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -276,11 +294,6 @@ export function CommandPalette({
       }
     }
   }, [selectedIndex]);
-
-  function executeCommand(cmd: Command) {
-    onClose();
-    cmd.action();
-  }
 
   if (!isOpen) return null;
 

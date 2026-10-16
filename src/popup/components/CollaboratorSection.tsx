@@ -22,7 +22,7 @@ import type {
   GitHubRepository,
 } from "../../lib/github/types";
 import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
-import { useToast } from "./feedback/ToastContext";
+import { useToast } from "./feedback/useToast";
 import { ConfirmDialog } from "./feedback/ConfirmDialog";
 import { CollaboratorSkeleton } from "./feedback/Skeletons";
 

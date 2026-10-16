@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CircleDot, CheckCircle2, ExternalLink } from "lucide-react";
 import type { GitHubIssue } from "../../lib/github/client";
 import { useUpdateIssueState } from "../hooks/useIssues";
-import { useToast } from "./feedback/ToastContext";
+import { useToast } from "./feedback/useToast";
 import { ConfirmDialog } from "./feedback/ConfirmDialog";
 import { formatGitHubError } from "../../lib/github/errors";
 

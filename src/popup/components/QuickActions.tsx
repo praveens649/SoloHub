@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Check,
   Copy,
@@ -13,7 +13,7 @@ import { useOrganizations } from "../hooks/useOrganizations";
 import { CollaboratorSection } from "./CollaboratorSection";
 import type { GitHubRepository } from "../../lib/github/types";
 import { GitHubApiError, formatGitHubError } from "../../lib/github/errors";
-import { useToast } from "./feedback/ToastContext";
+import { useToast } from "./feedback/useToast";
 
 export type QuickActionMode = "none" | "create-repo" | "manage-access";
 
@@ -42,11 +42,13 @@ export function QuickActions({
   const toast = useToast();
   const { data: organizations } = useOrganizations();
 
-  useEffect(() => {
+  const [prevInitialMode, setPrevInitialMode] = useState(initialMode);
+  if (initialMode !== prevInitialMode) {
+    setPrevInitialMode(initialMode);
     if (initialMode) {
       setMode(initialMode);
     }
-  }, [initialMode]);
+  }
 
   const createMutation = useCreateRepository();
 

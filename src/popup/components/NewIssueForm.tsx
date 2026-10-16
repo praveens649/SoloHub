@@ -4,7 +4,7 @@ import { useRepositories } from "../hooks/useRepositories";
 import { useCreateIssue } from "../hooks/useIssues";
 import type { GitHubIssue } from "../../lib/github/client";
 import { formatGitHubError } from "../../lib/github/errors";
-import { useToast } from "./feedback/ToastContext";
+import { useToast } from "./feedback/useToast";
 
 interface NewIssueFormProps {
   onClose: () => void;
