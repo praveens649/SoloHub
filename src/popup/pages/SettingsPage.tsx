@@ -165,9 +165,9 @@ export function SettingsPage({
           <p className="text-[11px] text-[#71717A] leading-relaxed">
             GitHub productivity & control center for solo developers.
           </p>
-          <div className="pt-1 flex items-center gap-1 text-[10px] text-[#71717A]">
-            <Shield size={11} className="text-emerald-400" />
-            <span>Tokens are stored securely. So chill out!😘</span>
+          <div className="pt-1 flex items-start gap-1.5 text-[10px] text-[#71717A] leading-tight">
+            <Shield size={11} className="text-[#A1A1AA] mt-0.5 shrink-0" />
+            <span>Tokens are stored locally in unencrypted browser storage. Disconnect if using a shared or public computer.</span>
           </div>
         </div>
       </section>

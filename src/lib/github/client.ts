@@ -125,7 +125,9 @@ export async function getRepositoryCommits(
 ): Promise<GitHubCommit[]> {
   const authorParam = author ? `&author=${encodeURIComponent(author)}` : "";
   return githubFetch<GitHubCommit[]>(
-    `/repos/${owner}/${repo}/commits?since=${encodeURIComponent(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/commits?since=${encodeURIComponent(
       since
     )}&until=${encodeURIComponent(until)}${authorParam}&per_page=100`,
     token
@@ -299,22 +301,74 @@ export async function getRepositories(
   }
 }
 
+export function validateGitHubEndpoint(endpoint: string): URL {
+  if (!endpoint || typeof endpoint !== "string") {
+    throw new Error(
+      "Invalid GitHub API endpoint: endpoint must be a non-empty string."
+    );
+  }
+
+  const trimmed = endpoint.trim();
+
+  // Prohibit absolute URLs, protocol-relative URLs, and scheme injection
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("//") ||
+    trimmed.includes("://")
+  ) {
+    throw new Error(
+      "Invalid GitHub API endpoint: absolute and protocol-relative URLs are prohibited."
+    );
+  }
+
+  // Enforce relative path starting with a single '/'
+  if (!trimmed.startsWith("/")) {
+    throw new Error(
+      "Invalid GitHub API endpoint: endpoint must start with a leading slash '/'."
+    );
+  }
+
+  // Reject path traversal sequences and backslashes
+  if (
+    trimmed.includes("/../") ||
+    trimmed.includes("/..") ||
+    trimmed.includes("\\")
+  ) {
+    throw new Error(
+      "Invalid GitHub API endpoint: path traversal sequences are prohibited."
+    );
+  }
+
+  const resolved = new URL(trimmed, GITHUB_API);
+
+  // Ensure origin is strictly https://api.github.com
+  if (resolved.origin !== GITHUB_API) {
+    throw new Error("Invalid GitHub API endpoint: request origin mismatch.");
+  }
+
+  return resolved;
+}
+
 export async function githubFetch<T>(
   endpoint: string,
   token: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const url = validateGitHubEndpoint(endpoint);
+
+  // Enforce header safety: build Headers and prevent caller override of mandatory auth & accept headers
+  const headers = new Headers(options.headers);
+  headers.set("Accept", "application/vnd.github+json");
+  headers.set("Authorization", `Bearer ${token.trim()}`);
+  headers.set("X-GitHub-Api-Version", "2022-11-28");
+
   let response: Response;
 
   try {
-    response = await fetch(`${GITHUB_API}${endpoint}`, {
+    response = await fetch(url.toString(), {
       ...options,
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": "2022-11-28",
-        ...options.headers,
-      },
+      headers,
     });
   } catch (err) {
     if (
@@ -427,7 +481,9 @@ export async function mergePullRequest(
   mergeMethod: "squash" | "merge" | "rebase" = "squash"
 ): Promise<GitHubMergeResult> {
   return githubFetch<GitHubMergeResult>(
-    `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`,
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/pulls/${encodeURIComponent(String(pullNumber))}/merge`,
     token,
     {
       method: "PUT",
@@ -475,7 +531,9 @@ export async function updateIssueState(
   state: "open" | "closed"
 ): Promise<GitHubIssue> {
   return githubFetch<GitHubIssue>(
-    `/repos/${owner}/${repo}/issues/${issueNumber}`,
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/issues/${encodeURIComponent(String(issueNumber))}`,
     token,
     {
       method: "PATCH",
@@ -497,7 +555,7 @@ export async function createIssue(
   body?: string
 ): Promise<GitHubIssue> {
   return githubFetch<GitHubIssue>(
-    `/repos/${owner}/${repo}/issues`,
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues`,
     token,
     {
       method: "POST",

@@ -6,11 +6,11 @@ import type { ServerConfig } from "./config.js";
 import { OAuthStateStore, defaultStateStore } from "./stateStore.js";
 
 // Standard GitHub OAuth code pattern: alphanumeric with hyphens/underscores
-const AUTH_CODE_REGEX = /^[a-zA-Z0-9_\-]{10,256}$/;
+const AUTH_CODE_REGEX = /^[a-zA-Z0-9_-]{10,256}$/;
 
 // Standard Chrome Extension chromiumapp.org URL
 const CHROMIUMAPP_REGEX = /^https:\/\/[a-z0-9]{32}\.chromiumapp\.org(?:\/.*)?$/i;
-const DEV_CHROMIUMAPP_REGEX = /^https:\/\/[a-z0-9_\-]+\.chromiumapp\.org(?:\/.*)?$/i;
+const DEV_CHROMIUMAPP_REGEX = /^https:\/\/[a-z0-9_-]+\.chromiumapp\.org(?:\/.*)?$/i;
 
 export function createApp(
   config: ServerConfig,
@@ -295,6 +295,7 @@ export function createApp(
       err: unknown,
       _req: Request,
       res: Response,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _next: NextFunction
     ) => {
       if (err instanceof Error && "type" in err && (err as { type: string }).type === "entity.too.large") {
