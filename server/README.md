@@ -4,7 +4,7 @@ The Solohub Authentication Server is a lightweight, hardened Node.js/Express ser
 
 Because client-side Chrome Extensions cannot securely hide private client secrets, GitHub OAuth Web Application flows require a backend proxy to hold the `GITHUB_CLIENT_SECRET` and complete the token exchange with GitHub.
 
-> **Note**: This backend is **optional** if extension users authenticate via GitHub Personal Access Tokens (PAT). PAT authentication communicates directly with `https://api.github.com` and requires no backend infrastructure.
+> **IMPORTANT**: This backend is **strictly optional** and is **ONLY required if you choose to self-host GitHub OAuth authentication**. Users installing the prebuilt Solohub extension ZIP who authenticate with a GitHub Personal Access Token (PAT) communicate directly with GitHub's REST API and do **NOT** need to install, configure, deploy, or run this server.
 
 ---
 

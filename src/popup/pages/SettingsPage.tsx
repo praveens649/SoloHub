@@ -83,6 +83,23 @@ export function SettingsPage({
               <span>Disconnect</span>
             </button>
           </div>
+          <div className="border-t border-[#27272A]/80 pt-2 flex items-center justify-between text-[11px] text-[#71717A]">
+            <span>Authentication: Direct GitHub API (PAT / OAuth)</span>
+            <button
+              type="button"
+              onClick={() => {
+                const url = "https://github.com/settings/tokens";
+                if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+                  chrome.tabs.create({ url });
+                } else {
+                  window.open(url, "_blank", "noopener,noreferrer");
+                }
+              }}
+              className="text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+            >
+              Manage Tokens ↗
+            </button>
+          </div>
         </div>
       </section>
 

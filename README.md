@@ -102,55 +102,66 @@ Solohub is distributed via GitHub Releases as an unpacked ZIP archive. It is not
    - Click the Extensions puzzle piece icon in the Chrome toolbar.
    - Pin **Solohub** to your toolbar and click the icon to launch the control center.
 
+> **No Build Tools or Backend Required for Normal Use**: If you are installing Solohub from a release ZIP, you do **not** need Node.js, PNPM, a server backend, or repository source code. Simply extract the archive, load it unpacked into Chrome, and authenticate with your GitHub Personal Access Token.
+
 ---
 
 ## Authentication Setup
 
-Solohub offers two authentication options:
+### 1. Personal Access Token (Default & Recommended)
 
-### Option 1: Direct Personal Access Token (Recommended)
+This is the primary, zero-configuration method for solo developers. Your token connects directly and exclusively from your browser to GitHub's REST API (`https://api.github.com`). **No backend or third-party server is ever involved.**
 
-This is the fastest, easiest, and most secure method for individual solo developers. It requires **zero backend infrastructure**.
+#### Creating a Token (Classic - Recommended)
+1. Navigate to [GitHub Token Settings (Classic)](https://github.com/settings/tokens/new?scopes=repo,read:user,notifications&description=Solohub%20Chrome%20Extension).
+2. Set a **Note** (e.g. `Solohub Chrome Extension`) and choose an **Expiration** period.
+3. Verify the required scopes:
+   - **`repo`**: Full control of private and public repositories. Required to list your repositories, branches, inspect issues, pull requests, and manage collaborators.
+   - **`read:user`**: Required to fetch your profile information, avatar, and authenticated username.
+   - **`notifications`**: Required for the Action Center / Inbox to fetch pending notifications and review requests.
+4. Click **Generate token** and copy the string (`ghp_...`).
+5. Open Solohub, paste the token into the **Personal Access Token** field, and click **Connect Token**.
 
-1. Go to [GitHub Token Settings](https://github.com/settings/tokens/new) (Classic Tokens).
-2. Give your token a descriptive note (e.g., `Solohub Chrome Extension`).
-3. Set an expiration date.
-4. Select the following required scopes:
-   - `repo`: Required to view repositories, branches, open PRs, manage collaborators, and file issues.
-   - `read:user`: Required to fetch your profile information, avatar, and username.
-   - `notifications`: Required for the Action Center to show pending notifications and review requests.
-5. Click **Generate token** and copy the string (`ghp_...`).
-6. Open Solohub, paste the token into the **Personal Access Token** field, and click **Connect Token**.
-
-> **Security Reminder**: Never paste your Personal Access Token into public issue trackers, pull requests, or chats. Solohub stores your token locally in `chrome.storage.local`.
+#### Using Fine-Grained Personal Access Tokens (Beta)
+If your organization requires Fine-Grained Personal Access Tokens:
+- **Resource Owner**: Select your personal account or target organization.
+- **Repository Access**: Select **All repositories** (recommended for a full control center view) or select specific repositories.
+- **Permissions Required**:
+  - *Repository permissions*:
+    - **Issues**: Read and write (to browse, search, and file issues).
+    - **Pull requests**: Read and write (to browse, review, and track PRs).
+    - **Contents**: Read-only (to inspect commits, branches, and code activity).
+    - **Metadata**: Read-only (mandatory for all GitHub API access).
+    - **Administration / Collaborators**: Read and write (only if using collaborator management in Exec mode).
+  - *Account permissions*:
+    - **Notifications**: Read-only (for Action Center feed).
+- *Note*: Fine-grained tokens restricted to selected repositories will return 404 for repositories not explicitly granted access, and organization aggregations may be limited. For this reason, Classic PATs remain recommended for solo developers.
 
 ---
 
-### Option 2: GitHub OAuth 2.0 (Self-Hosted)
+### 2. Optional Self-Hosted OAuth 2.0 (Advanced)
 
-If you prefer logging in via the standard GitHub OAuth authorization screen, you must run the companion authentication server:
+For developers who prefer web authentication via GitHub's OAuth authorization screen, Solohub includes an optional companion backend:
+
+> **Important Limitation for Unpacked Extensions**: Google Chrome computes the Extension ID of an unpacked extension from the absolute directory path where the extension is extracted on your computer. Because every user's directory path is unique, a single shared OAuth redirect URI cannot serve all unpacked installations. OAuth is therefore intended for developers self-hosting their own OAuth App and backend.
 
 1. **Register a GitHub OAuth App**:
    - Go to [GitHub Developer Settings → OAuth Apps → New OAuth App](https://github.com/settings/applications/new).
-   - Set **Application Name** to `Solohub`.
-   - Set **Homepage URL** to your project repository or site.
    - Set **Authorization callback URL** to:
      ```text
-     https://<your-extension-id>.chromiumapp.org/
+     https://<your-unique-extension-id>.chromiumapp.org/
      ```
-     *(You can find your extension ID on `chrome://extensions` after loading the unpacked extension).*
+     *(Your Extension ID is visible on `chrome://extensions` after loading unpacked).*
 2. **Deploy the Companion Backend**:
-   - Follow the deployment instructions in [`server/README.md`](server/README.md).
-   - Deploy the server to an HTTPS-enabled host (e.g. Railway, Render, Fly.io, or VPS behind Nginx).
-3. **Build the Extension with Backend Configuration**:
-   - Set `VITE_GITHUB_CLIENT_ID` and `VITE_BACKEND_URL` in your `.env.local`:
+   - See [`server/README.md`](server/README.md) for full instructions.
+   - The backend must be deployed to an HTTPS host in production (e.g. Railway, Render, Fly.io, or VPS).
+3. **Build the Extension with OAuth Configuration**:
+   - Create `.env.local` in the project root:
      ```dotenv
      VITE_GITHUB_CLIENT_ID=your_oauth_client_id
      VITE_BACKEND_URL=https://auth.yourdomain.com
      ```
-   - Rebuild the extension (`pnpm build`).
-
-> **Note on Chrome Extension IDs**: Unpacked Chrome extensions calculate their extension ID based on the absolute path of the directory on your computer. Because different machines install unpacked extensions into different paths, OAuth App callback URLs must match the specific extension ID of the installed machine.
+   - Build the extension (`pnpm build`) and reload in Chrome.
 
 ---
 
