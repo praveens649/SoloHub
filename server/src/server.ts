@@ -1,76 +1,33 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import { validateConfig } from "./config.js";
+import { createApp } from "./app.js";
 
-dotenv.config();
+let config;
+try {
+  config = validateConfig();
+} catch (error) {
+  console.error(
+    "[Server Startup Error]",
+    error instanceof Error ? error.message : "Invalid configuration"
+  );
+  process.exit(1);
+}
 
-const app = express();
+const app = createApp(config);
 
-app.use(
-  cors({
-    origin: true,
-  })
-);
-
-app.use(express.json());
-
-app.post("/auth/github/exchange", async (req, res) => {
-  try {
-    const { code, redirect_uri } = req.body;
-
-    if (!code) {
-      return res.status(400).json({
-        error: "Authorization code is required",
-      });
-    }
-
-    const response = await fetch(
-      "https://github.com/login/oauth/access_token",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          client_id: process.env.GITHUB_CLIENT_ID,
-          client_secret: process.env.GITHUB_CLIENT_SECRET,
-          code,
-          redirect_uri,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok || data.error) {
-      console.error("GitHub token exchange failed:", data);
-
-      return res.status(400).json({
-        error: data.error_description || "Token exchange failed",
-      });
-    }
-
-    return res.json({
-      access_token: data.access_token,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      error: "Internal server error",
-    });
-  }
+const server = app.listen(config.PORT, () => {
+  console.log(
+    `Solohub hardened auth server running on port ${config.PORT} [env=${config.NODE_ENV}]`
+  );
 });
 
-app.get("/health", (_req, res) => {
-  res.json({
-    status: "ok",
+// Graceful shutdown handling
+function handleShutdown(signal: string) {
+  console.log(`[Server] Received ${signal}. Gracefully closing server...`);
+  server.close(() => {
+    console.log("[Server] HTTP server closed.");
+    process.exit(0);
   });
-});
+}
 
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-  console.log(`Solohub auth server running on port ${PORT}`);
-});
+process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+process.on("SIGINT", () => handleShutdown("SIGINT"));
