@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { loginWithGitHub } from "../src/lib/github/auth.js";
 
 describe("OAuth Authentication Flow (auth.ts)", () => {
-  const originalChrome = globalThis.chrome;
+  const originalChrome = (globalThis as Record<string, unknown>).chrome;
   const originalFetch = globalThis.fetch;
 
   let storageRemovedKey: string | null = null;

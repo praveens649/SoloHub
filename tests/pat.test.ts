@@ -4,7 +4,7 @@ import { getGitHubUser, GitHubApiError } from "../src/lib/github/client.js";
 import { getAuth, setAuth, clearAuth } from "../src/lib/storage/auth.js";
 
 describe("PAT-First Authentication & Storage Tests", () => {
-  const originalChrome = globalThis.chrome;
+  const originalChrome = (globalThis as Record<string, unknown>).chrome;
   const originalFetch = globalThis.fetch;
   const originalEnv = { ...process.env };
 
@@ -126,7 +126,9 @@ describe("PAT-First Authentication & Storage Tests", () => {
     await assert.rejects(
       () => getGitHubUser("ghp_expiredOrInvalidToken"),
       (err: unknown) => {
-        assert.ok(err instanceof GitHubApiError);
+        if (!(err instanceof GitHubApiError)) {
+          return false;
+        }
         assert.equal(err.status, 401);
         assert.equal(err.message, "Bad credentials");
         return true;

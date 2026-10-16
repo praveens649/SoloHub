@@ -2,9 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getManifest } from "../manifest.config.ts";
 
+interface TestManifest {
+  manifest_version: number;
+  name: string;
+  permissions?: string[];
+  host_permissions?: string[];
+  web_accessible_resources?: unknown;
+}
+
 test("Manifest V3 Configuration", async (t) => {
   await t.test("Development mode configuration", () => {
-    const manifest = getManifest("development");
+    const manifest = getManifest("development") as unknown as TestManifest;
 
     assert.equal(manifest.manifest_version, 3);
     assert.equal(manifest.name, "Solohub (Dev)");
@@ -13,13 +21,13 @@ test("Manifest V3 Configuration", async (t) => {
     assert.ok(manifest.host_permissions?.includes("http://localhost:3001/*"));
     assert.ok(manifest.host_permissions?.includes("http://127.0.0.1:3001/*"));
     assert.equal(
-      manifest.permissions?.includes("tabs" as unknown as chrome.runtime.ManifestPermissions),
+      manifest.permissions?.includes("tabs"),
       false
     );
   });
 
   await t.test("Production mode configuration", () => {
-    const manifest = getManifest("production");
+    const manifest = getManifest("production") as unknown as TestManifest;
 
     assert.equal(manifest.manifest_version, 3);
     assert.equal(manifest.name, "Solohub");
@@ -28,19 +36,19 @@ test("Manifest V3 Configuration", async (t) => {
 
     // Crucial: Production must NOT contain localhost origins
     assert.equal(
-      manifest.host_permissions?.some((p) => p.includes("localhost")),
+      manifest.host_permissions?.some((p: string) => p.includes("localhost")),
       false,
       "Production manifest must not include localhost"
     );
     assert.equal(
-      manifest.host_permissions?.some((p) => p.includes("127.0.0.1")),
+      manifest.host_permissions?.some((p: string) => p.includes("127.0.0.1")),
       false,
       "Production manifest must not include 127.0.0.1"
     );
 
     // Permissions check: 'tabs' must not be present
     assert.equal(
-      manifest.permissions?.includes("tabs" as unknown as chrome.runtime.ManifestPermissions),
+      manifest.permissions?.includes("tabs"),
       false,
       "Permissions must not include 'tabs'"
     );
@@ -56,12 +64,12 @@ test("Manifest V3 Configuration", async (t) => {
   await t.test("Dynamic backend host permissions in production", () => {
     const manifest = getManifest("production", {
       VITE_BACKEND_URL: "https://auth.solohub.io",
-    });
+    }) as unknown as TestManifest;
 
     assert.ok(manifest.host_permissions?.includes("https://auth.solohub.io/*"));
     assert.ok(manifest.host_permissions?.includes("https://api.github.com/*"));
     assert.equal(
-      manifest.host_permissions?.some((p) => p.includes("localhost")),
+      manifest.host_permissions?.some((p: string) => p.includes("localhost")),
       false
     );
   });

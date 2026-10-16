@@ -3,7 +3,7 @@ import { GithubIcon } from "./Icons";
 import { loginWithGitHub } from "../../lib/github/auth";
 import { getGitHubUser } from "../../lib/github/client";
 import { setAuth } from "../../lib/storage/auth";
-import { KeyRound, Loader2, ExternalLink, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react";
+import { KeyRound, Loader2, ExternalLink,ChevronDown, ChevronUp } from "lucide-react";
 import type { GitHubUser } from "../../lib/github/types";
 
 interface HomeHeroProps {
@@ -217,12 +217,12 @@ export function HomeHero({ onSuccess }: HomeHeroProps) {
         </div>
 
         {/* Security & Storage Disclosure */}
-        <div className="flex items-start gap-1.5 text-left text-[10px] text-[#71717A] leading-tight px-1 pt-1">
+        {/* <div className="flex items-start gap-1.5 text-left text-[10px] text-[#71717A] leading-tight px-1 pt-1">
           <ShieldAlert size={12} className="text-[#A1A1AA] shrink-0 mt-0.5" />
           <span>
             Tokens are stored locally in <code className="text-[#A1A1AA]">chrome.storage.local</code> without encryption. Do not connect on shared or public computers.
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );
