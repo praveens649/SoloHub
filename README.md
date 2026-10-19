@@ -28,19 +28,21 @@ Solohub puts your GitHub repositories, active pull requests, issues, notificatio
 
 ## Screenshots
 
-> *Placeholder: Visual previews of Solohub in action.*
+### Dashboard
 
-```
-┌────────────────────────────────────────────────────────┐
-│ [Screenshot: Solohub Dashboard & Productivity View]     │
-│ (Coming soon - capture from unpacked extension popup)  │
-└────────────────────────────────────────────────────────┘
+![Solohub dashboard](src/asset/screenshots/home.png)
 
-┌────────────────────────────────────────────────────────┐
-│ [Screenshot: Command Palette & Quick Actions]          │
-│ (Coming soon - capture from Ctrl+K palette modal)      │
-└────────────────────────────────────────────────────────┘
-```
+### Repository Management
+
+![Solohub repository view](src/asset/screenshots/repo.png)
+
+### GitHub Authentication
+
+![Solohub GitHub authentication](src/asset/screenshots/auth-pag.png)
+
+### Create a Repository
+
+![Solohub create repository flow](src/asset/screenshots/create%20repo.png)
 
 ---
 
