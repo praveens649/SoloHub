@@ -10,15 +10,30 @@
     box-sizing: border-box;
   }
 
+  html,
   body {
     margin: 0;
-    min-width: 380px;
-    width: 100%;
-    min-height: 580px;
+    padding: 0;
+    width: 420px;
+    height: 600px;
+    min-width: 420px;
+    max-width: 420px;
+    min-height: 600px;
+    max-height: 600px;
     background-color: #090a0f;
     color: #f4f4f5;
     font-family: var(--font-sans);
-    overflow-x: hidden;
+    overflow: hidden;
+  }
+
+  #root {
+    width: 420px;
+    height: 600px;
+    min-width: 420px;
+    max-width: 420px;
+    min-height: 600px;
+    max-height: 600px;
+    overflow: hidden;
   }
 
   /* Custom sleek dark scrollbar */

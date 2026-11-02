@@ -160,7 +160,7 @@ function App() {
   // 1. Initial Loading State
   if (loading) {
     return (
-      <div className="flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col items-center justify-center bg-[#090A0F] text-[#FAFAFA]">
+      <div className="flex h-[600px] w-[420px] flex-col items-center justify-center bg-[#090A0F] text-[#FAFAFA]">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#27272A] border-t-white" />
         <p className="mt-3 text-xs text-[#71717A]">Checking connection...</p>
       </div>
@@ -170,7 +170,7 @@ function App() {
   // 2. Unauthenticated Experience (Separate Hero screen)
   if (!authenticated) {
     return (
-      <div className="flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col bg-[#090A0F]">
+      <div className="flex h-[600px] w-[420px] flex-col bg-[#090A0F]">
         <HomeHero onSuccess={handleLoginSuccess} />
       </div>
     );

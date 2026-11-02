@@ -25,7 +25,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="relative flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col overflow-hidden bg-[#090A0F] text-[#FAFAFA] font-sans antialiased">
+    <div className="relative flex h-[600px] w-[420px] flex-col overflow-hidden bg-[#090A0F] text-[#FAFAFA] font-sans antialiased">
       {/* Sticky Header */}
       <Header
         user={user}
