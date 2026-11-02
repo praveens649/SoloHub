@@ -14,7 +14,9 @@ interface HomePageProps {
   user: GitHubUser | null;
   onNavigate: (
     page: NavPage,
-    state?: { execMode?: "none" | "create-repo" | "manage-access" }
+    state?: {
+      repoAction?: "none" | "create-repo" | "manage-access";
+    }
   ) => void;
   onOpenNewIssue?: () => void;
 }
@@ -55,18 +57,18 @@ export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
         <TodayProductivity />
       </ErrorBoundary>
 
-      {/* 3. Action Center Preview (Max 2-3 items + View all →) */}
+      {/* 3. Diwali Contribution Heatmap (Swapped above Action Center) */}
+      <ErrorBoundary>
+        <ContributionHeatmap />
+      </ErrorBoundary>
+
+      {/* 4. Action Center Preview (Max 2-3 items + View all →) */}
       <ErrorBoundary>
         <ActionCenter
           previewLimit={3}
           onViewAll={() => onNavigate("inbox")}
           showHeader={true}
         />
-      </ErrorBoundary>
-
-      {/* 4. Diwali Contribution Heatmap */}
-      <ErrorBoundary>
-        <ContributionHeatmap />
       </ErrorBoundary>
 
       {/* 5. Recent GitHub Activity Preview */}
@@ -96,10 +98,10 @@ export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
         </h2>
 
         <div className="grid grid-cols-3 gap-2">
-          {/* Create Repository */}
+          {/* Create Repository -> navigates to Repos page */}
           <button
             type="button"
-            onClick={() => onNavigate("exec", { execMode: "create-repo" })}
+            onClick={() => onNavigate("repos", { repoAction: "create-repo" })}
             className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2.5 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
           >
             <FolderPlus size={15} className="text-[#A1A1AA]" />
@@ -120,10 +122,10 @@ export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
             </span>
           </button>
 
-          {/* Manage Access */}
+          {/* Manage Access -> navigates to Repos page */}
           <button
             type="button"
-            onClick={() => onNavigate("exec", { execMode: "manage-access" })}
+            onClick={() => onNavigate("repos", { repoAction: "manage-access" })}
             className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2.5 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
           >
             <Users size={15} className="text-[#A1A1AA]" />

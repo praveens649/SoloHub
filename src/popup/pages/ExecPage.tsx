@@ -1,12 +1,7 @@
 import { useState } from "react";
-import { QuickActions, type QuickActionMode } from "../components/QuickActions";
 import { Copy, Check } from "lucide-react";
 
-interface ExecPageProps {
-  initialMode?: QuickActionMode;
-}
-
-export function ExecPage({ initialMode = "none" }: ExecPageProps) {
+export function ExecPage() {
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
   const cliCommands = [
@@ -49,12 +44,6 @@ export function ExecPage({ initialMode = "none" }: ExecPageProps) {
         <p className="text-[11px] text-[#71717A]">Developer Control</p>
         <h1 className="text-base font-bold text-[#FAFAFA]">Execution Center</h1>
       </div>
-
-      {/* Quick Actions (Create Repo, Manage Access) */}
-      <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-[#FAFAFA]">Quick Actions</h2>
-        <QuickActions initialMode={initialMode} />
-      </section>
 
       {/* CLI Quick Commands */}
       <section className="space-y-2 pt-1">

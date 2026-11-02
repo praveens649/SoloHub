@@ -36,7 +36,7 @@ interface CommandPaletteProps {
   onNavigate: (
     page: NavPage,
     state?: {
-      execMode?: "none" | "create-repo" | "manage-access";
+      repoAction?: "none" | "create-repo" | "manage-access";
       focusSearch?: boolean;
       repoFilter?: RepoFilter;
     }
@@ -121,7 +121,7 @@ export function CommandPalette({
         group: "Actions",
         keywords: ["create", "new", "repo", "repository", "init"],
         icon: FolderPlus,
-        action: () => onNavigate("exec", { execMode: "create-repo" }),
+        action: () => onNavigate("repos", { repoAction: "create-repo" }),
       },
       {
         id: "act-create-issue",
@@ -139,7 +139,7 @@ export function CommandPalette({
         group: "Actions",
         keywords: ["access", "collaborators", "team", "invite", "permissions"],
         icon: Users,
-        action: () => onNavigate("exec", { execMode: "manage-access" }),
+        action: () => onNavigate("repos", { repoAction: "manage-access" }),
       },
 
       // Repository

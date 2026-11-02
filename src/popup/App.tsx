@@ -28,7 +28,7 @@ function App() {
   const [newIssueModalOpen, setNewIssueModalOpen] = useState(false);
   const [reposFocusSearch, setReposFocusSearch] = useState(false);
   const [reposInitialFilter, setReposInitialFilter] = useState<RepoFilter>("all");
-  const [execInitialMode, setExecInitialMode] = useState<"none" | "create-repo" | "manage-access">("none");
+  const [repoInitialAction, setRepoInitialAction] = useState<"none" | "create-repo" | "manage-access">("none");
 
   const queryClient = useQueryClient();
 
@@ -131,15 +131,15 @@ function App() {
   function handleNavigate(
     page: NavPage,
     state?: {
-      execMode?: "none" | "create-repo" | "manage-access";
+      repoAction?: "none" | "create-repo" | "manage-access";
       focusSearch?: boolean;
       repoFilter?: RepoFilter;
     }
   ) {
-    if (state?.execMode) {
-      setExecInitialMode(state.execMode);
+    if (state?.repoAction) {
+      setRepoInitialAction(state.repoAction);
     } else {
-      setExecInitialMode("none");
+      setRepoInitialAction("none");
     }
 
     if (state?.focusSearch) {
@@ -204,10 +204,11 @@ function App() {
           <RepositoriesPage
             autoFocusSearch={reposFocusSearch}
             initialFilter={reposInitialFilter}
+            initialAction={repoInitialAction}
           />
         )}
 
-        {currentPage === "exec" && <ExecPage initialMode={execInitialMode} />}
+        {currentPage === "exec" && <ExecPage />}
 
         {currentPage === "settings" && (
           <SettingsPage
