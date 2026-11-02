@@ -1,7 +1,22 @@
-import { useState } from "react";
-import { ArrowLeft, Moon, RefreshCw, Check, LogOut, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  Moon,
+  RefreshCw,
+  Check,
+  LogOut,
+  Shield,
+  Sparkles,
+  ExternalLink,
+} from "lucide-react";
 import type { GitHubUser } from "../../lib/github/types";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  getUserPreferences,
+  setHeatmapPalettePreference,
+  type HeatmapPalettePreference,
+} from "../../lib/storage/preferences";
+import { useReleaseUpdate } from "../hooks/useReleaseUpdate";
 
 interface SettingsPageProps {
   user: GitHubUser | null;
@@ -16,7 +31,30 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [syncing, setSyncing] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
+  const [palette, setPalette] = useState<HeatmapPalettePreference>("diwali");
+
   const queryClient = useQueryClient();
+  const {
+    installedVersion,
+    latestVersion,
+    hasUpdate,
+    release,
+    isChecking,
+    checkForUpdates,
+  } = useReleaseUpdate();
+
+  useEffect(() => {
+    async function load() {
+      const prefs = await getUserPreferences();
+      setPalette(prefs.heatmapPalette);
+    }
+    void load();
+  }, []);
+
+  async function handlePaletteChange(newPalette: HeatmapPalettePreference) {
+    setPalette(newPalette);
+    await setHeatmapPalettePreference(newPalette);
+  }
 
   async function handleSyncCache() {
     setSyncing(true);
@@ -109,7 +147,8 @@ export function SettingsPage({
           Preferences
         </h2>
 
-        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3">
+        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 space-y-3">
+          {/* Theme */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Moon size={15} className="text-[#A1A1AA]" />
@@ -122,6 +161,46 @@ export function SettingsPage({
             <span className="rounded bg-[#18181B] border border-[#27272A] px-2 py-0.5 text-[10px] font-semibold text-[#A1A1AA]">
               Active
             </span>
+          </div>
+
+          {/* Seasonal Contribution Palette */}
+          <div className="border-t border-[#27272A]/80 pt-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={15} className="text-amber-400" />
+              <div>
+                <p className="text-xs font-medium text-[#FAFAFA]">
+                  Contribution Heatmap Palette
+                </p>
+                <p className="text-[10px] text-[#71717A]">
+                  Seasonal saffron & gold or classic obsidian emerald
+                </p>
+              </div>
+            </div>
+
+            <div className="flex rounded-md border border-[#27272A] bg-[#18181B] p-0.5">
+              <button
+                type="button"
+                onClick={() => handlePaletteChange("diwali")}
+                className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  palette === "diwali"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                🪔 Diwali
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePaletteChange("classic")}
+                className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  palette === "classic"
+                    ? "bg-zinc-800 text-white border border-zinc-700"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Classic
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -161,13 +240,13 @@ export function SettingsPage({
         </div>
       </section>
 
-      {/* 4. About */}
+      {/* 4. About & Releases */}
       <section className="space-y-2">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">
-          About
+          About & Releases
         </h2>
 
-        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs space-y-1.5">
+        <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img
@@ -177,14 +256,57 @@ export function SettingsPage({
               />
               <span className="text-[#FAFAFA] font-medium">Solohub</span>
             </div>
-            <span className="font-mono text-[#71717A]">v0.1.0</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[#71717A]">v{installedVersion}</span>
+              <button
+                type="button"
+                onClick={() => void checkForUpdates(true)}
+                disabled={isChecking}
+                className="flex items-center gap-1 rounded border border-[#27272A] bg-[#18181B] px-2 py-0.5 text-[10px] font-medium text-zinc-300 hover:text-white disabled:opacity-50 cursor-pointer transition-colors"
+              >
+                <RefreshCw size={10} className={isChecking ? "animate-spin" : ""} />
+                <span>Check for updates</span>
+              </button>
+            </div>
           </div>
+
+          {/* Update Status Banner in Settings */}
+          {hasUpdate && release && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-950/20 p-2 text-[11px] flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-amber-300">
+                  Update {latestVersion} is available!
+                </span>
+                <p className="text-[10px] text-zinc-400">
+                  Solohub Diwali Update with new features.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const url = release.html_url;
+                  if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+                    chrome.tabs.create({ url });
+                  } else {
+                    window.open(url, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                className="flex items-center gap-1 rounded bg-amber-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-amber-500 transition-colors cursor-pointer"
+              >
+                <span>View Release</span>
+                <ExternalLink size={10} />
+              </button>
+            </div>
+          )}
+
           <p className="text-[11px] text-[#71717A] leading-relaxed">
             GitHub productivity & control center for solo developers.
           </p>
           <div className="pt-1 flex items-start gap-1.5 text-[10px] text-[#71717A] leading-tight">
             <Shield size={11} className="text-[#A1A1AA] mt-0.5 shrink-0" />
-            <span>Tokens are stored locally in unencrypted browser storage. Disconnect if using a shared or public computer.</span>
+            <span>
+              Tokens are stored locally in unencrypted browser storage. Disconnect if using a shared or public computer.
+            </span>
           </div>
         </div>
       </section>

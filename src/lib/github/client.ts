@@ -104,16 +104,96 @@ export interface GitHubEvent {
   type: string;
   created_at: string;
   repo: {
+    id?: number;
     name: string;
+    url?: string;
+  };
+  actor?: {
+    id?: number;
+    login: string;
+    display_login?: string;
+    avatar_url?: string;
+    url?: string;
   };
   payload: {
     action?: string;
     ref?: string;
+    ref_type?: string;
+    description?: string;
     commits?: Array<{
       sha: string;
       message: string;
+      url?: string;
     }>;
+    issue?: {
+      number: number;
+      title: string;
+      html_url?: string;
+      state?: string;
+      pull_request?: unknown;
+      user?: { login: string; avatar_url?: string };
+    };
+    pull_request?: {
+      number: number;
+      title: string;
+      html_url?: string;
+      state?: string;
+      merged?: boolean;
+      user?: { login: string; avatar_url?: string };
+    };
+    review?: {
+      id?: number;
+      state?: string;
+      html_url?: string;
+    };
+    comment?: {
+      id?: number;
+      body?: string;
+      html_url?: string;
+    };
+    release?: {
+      tag_name?: string;
+      name?: string;
+      body?: string;
+      html_url?: string;
+    };
+    forkee?: {
+      id?: number;
+      name?: string;
+      full_name?: string;
+      html_url?: string;
+      description?: string;
+    };
   };
+}
+
+export interface GitHubNotification {
+  id: string;
+  unread: boolean;
+  reason: string;
+  updated_at: string;
+  subject: {
+    title: string;
+    url: string | null;
+    latest_comment_url: string | null;
+    type: string;
+  };
+  repository: {
+    id: number;
+    name: string;
+    full_name: string;
+    html_url?: string;
+    owner?: {
+      login: string;
+      avatar_url?: string;
+    };
+  };
+}
+
+export async function getUserNotifications(
+  token: string
+): Promise<GitHubNotification[]> {
+  return githubFetch<GitHubNotification[]>("/notifications?per_page=50", token);
 }
 export async function getRepositoryCommits(
   token: string,
@@ -133,6 +213,16 @@ export async function getRepositoryCommits(
     token
   );
 }
+export async function getUserReceivedEvents(
+  token: string,
+  username: string
+): Promise<GitHubEvent[]> {
+  return githubFetch<GitHubEvent[]>(
+    `/users/${encodeURIComponent(username)}/received_events?per_page=50`,
+    token
+  );
+}
+
 export async function getUserActivity(
   token: string,
   username: string
@@ -656,4 +746,129 @@ export async function removeRepositoryCollaborator(
       method: "DELETE",
     }
   );
+}
+
+export interface GitHubGraphQLContributionDay {
+  date: string;
+  contributionCount: number;
+}
+
+export interface GitHubGraphQLContributionCalendar {
+  totalContributions: number;
+  weeks: Array<{
+    contributionDays: GitHubGraphQLContributionDay[];
+  }>;
+}
+
+export interface GitHubGraphQLContributionsResponse {
+  data?: {
+    viewer?: {
+      contributionsCollection?: {
+        contributionCalendar?: GitHubGraphQLContributionCalendar;
+      };
+    };
+    user?: {
+      contributionsCollection?: {
+        contributionCalendar?: GitHubGraphQLContributionCalendar;
+      };
+    };
+  };
+  errors?: Array<{ message: string }>;
+}
+
+export async function getUserYearlyContributions(
+  token: string,
+  username?: string
+): Promise<{ totalContributions: number; days: Map<string, number> } | null> {
+  // Query authenticated account (viewer) and user (by login) when available
+  const query = username
+    ? `
+      query($login: String!) {
+        viewer {
+          contributionsCollection {
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  contributionCount
+                  date
+                }
+              }
+            }
+          }
+        }
+        user(login: $login) {
+          contributionsCollection {
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  contributionCount
+                  date
+                }
+              }
+            }
+          }
+        }
+      }
+    `
+    : `
+      query {
+        viewer {
+          contributionsCollection {
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  contributionCount
+                  date
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+  try {
+    const res = await githubFetch<GitHubGraphQLContributionsResponse>(
+      "/graphql",
+      token,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          variables: username ? { login: username } : {},
+        }),
+      }
+    );
+
+    const calendar =
+      res?.data?.viewer?.contributionsCollection?.contributionCalendar ||
+      res?.data?.user?.contributionsCollection?.contributionCalendar;
+
+    if (!calendar || !calendar.weeks) {
+      return null;
+    }
+
+    const days = new Map<string, number>();
+    for (const week of calendar.weeks) {
+      for (const day of week.contributionDays) {
+        if (day.date) {
+          days.set(day.date, day.contributionCount || 0);
+        }
+      }
+    }
+
+    return {
+      totalContributions: calendar.totalContributions || 0,
+      days,
+    };
+  } catch (err) {
+    console.warn("Failed to fetch GraphQL contributionsCollection:", err);
+    return null;
+  }
 }
