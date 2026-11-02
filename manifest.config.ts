@@ -35,7 +35,7 @@ export function getManifest(
       return defineManifest({
         manifest_version: 3,
         name: isProd ? "Solohub" : "Solohub (Dev)",
-        version: "0.1.0",
+        version: "0.2.0",
       });
     }
 
@@ -64,7 +64,7 @@ export function getManifest(
 
     name: isProd ? "Solohub" : "Solohub (Dev)",
 
-    version: "0.1.0",
+    version: "0.2.0",
 
     description: "A productivity GitHub control center for solo developers.",
 
