@@ -9,6 +9,7 @@ import {
 import {
   getUserPreferences,
   setHeatmapPalettePreference,
+  setThemePreference,
 } from "../src/lib/storage/preferences.ts";
 
 describe("Contribution Heatmap & Seasonal Palette Tests", () => {
@@ -140,19 +141,24 @@ describe("Contribution Heatmap & Seasonal Palette Tests", () => {
     assert.equal(maxCount, 10);
   });
 
-  it("defaults user preference to Diwali palette and persists changes in storage", async () => {
+  it("defaults user preference to Diwali palette and theme, and persists changes in storage", async () => {
     // 1. Initial default is Diwali
     const initialPrefs = await getUserPreferences();
     assert.equal(initialPrefs.heatmapPalette, "diwali");
+    assert.equal(initialPrefs.theme, "diwali");
 
-    // 2. Set to classic
+    // 2. Set to classic / dark
     await setHeatmapPalettePreference("classic");
+    await setThemePreference("dark");
     const updatedPrefs = await getUserPreferences();
     assert.equal(updatedPrefs.heatmapPalette, "classic");
+    assert.equal(updatedPrefs.theme, "dark");
 
     // 3. Switch back to Diwali
     await setHeatmapPalettePreference("diwali");
+    await setThemePreference("diwali");
     const finalPrefs = await getUserPreferences();
     assert.equal(finalPrefs.heatmapPalette, "diwali");
+    assert.equal(finalPrefs.theme, "diwali");
   });
 });

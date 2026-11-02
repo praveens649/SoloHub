@@ -15,8 +15,10 @@ import {
   getUserPreferences,
   setHeatmapPalettePreference,
   type HeatmapPalettePreference,
+  type AppTheme,
 } from "../../lib/storage/preferences";
 import { useReleaseUpdate } from "../hooks/useReleaseUpdate";
+import { useTheme } from "../hooks/useTheme";
 
 interface SettingsPageProps {
   user: GitHubUser | null;
@@ -32,6 +34,7 @@ export function SettingsPage({
   const [syncing, setSyncing] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
   const [palette, setPalette] = useState<HeatmapPalettePreference>("diwali");
+  const { theme, setTheme } = useTheme();
 
   const queryClient = useQueryClient();
   const {
@@ -54,6 +57,15 @@ export function SettingsPage({
   async function handlePaletteChange(newPalette: HeatmapPalettePreference) {
     setPalette(newPalette);
     await setHeatmapPalettePreference(newPalette);
+  }
+
+  async function handleThemeChange(newTheme: AppTheme) {
+    await setTheme(newTheme);
+    // When switching to Diwali theme, also set heatmap palette to Diwali for full festive harmony
+    if (newTheme === "diwali" && palette !== "diwali") {
+      setPalette("diwali");
+      await setHeatmapPalettePreference("diwali");
+    }
   }
 
   async function handleSyncCache() {
@@ -144,23 +156,50 @@ export function SettingsPage({
       {/* 2. Preferences */}
       <section className="space-y-2">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">
-          Preferences
+          Preferences & Themes
         </h2>
 
         <div className="rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 space-y-3">
-          {/* Theme */}
+          {/* Solohub Theme Switcher */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Moon size={15} className="text-[#A1A1AA]" />
+              <span className="text-sm">{theme === "diwali" ? "🪔" : "🌙"}</span>
               <div>
-                <p className="text-xs font-medium text-[#FAFAFA]">Theme</p>
-                <p className="text-[10px] text-[#71717A]">Developer Dark Obsidian</p>
+                <p className="text-xs font-medium text-[#FAFAFA]">Solohub Theme</p>
+                <p className="text-[10px] text-[#71717A]">
+                  {theme === "diwali"
+                    ? "Festive Diwali Glow with warm saffron & gold"
+                    : "Developer Dark Obsidian"}
+                </p>
               </div>
             </div>
 
-            <span className="rounded bg-[#18181B] border border-[#27272A] px-2 py-0.5 text-[10px] font-semibold text-[#A1A1AA]">
-              Active
-            </span>
+            <div className="flex rounded-md border border-[#27272A] bg-[#18181B] p-0.5">
+              <button
+                type="button"
+                onClick={() => void handleThemeChange("diwali")}
+                className={`flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  theme === "diwali"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <span>🪔</span>
+                <span>Diwali</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleThemeChange("dark")}
+                className={`flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  theme === "dark"
+                    ? "bg-zinc-800 text-white border border-zinc-700"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <Moon size={10} />
+                <span>Dark</span>
+              </button>
+            </div>
           </div>
 
           {/* Seasonal Contribution Palette */}
@@ -169,10 +208,10 @@ export function SettingsPage({
               <Sparkles size={15} className="text-amber-400" />
               <div>
                 <p className="text-xs font-medium text-[#FAFAFA]">
-                  Contribution Heatmap Palette
+                  Heatmap Palette
                 </p>
                 <p className="text-[10px] text-[#71717A]">
-                  Seasonal saffron & gold or classic obsidian emerald
+                  Saffron & gold or classic GitHub emerald
                 </p>
               </div>
             </div>
@@ -180,7 +219,7 @@ export function SettingsPage({
             <div className="flex rounded-md border border-[#27272A] bg-[#18181B] p-0.5">
               <button
                 type="button"
-                onClick={() => handlePaletteChange("diwali")}
+                onClick={() => void handlePaletteChange("diwali")}
                 className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
                   palette === "diwali"
                     ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
@@ -191,7 +230,7 @@ export function SettingsPage({
               </button>
               <button
                 type="button"
-                onClick={() => handlePaletteChange("classic")}
+                onClick={() => void handlePaletteChange("classic")}
                 className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
                   palette === "classic"
                     ? "bg-zinc-800 text-white border border-zinc-700"

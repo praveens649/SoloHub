@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Header } from "./Header";
 import { BottomNav, type NavPage } from "./BottomNav";
 import type { GitHubUser } from "../../../lib/github/types";
+import { useTheme } from "../../hooks/useTheme";
 
 interface AppShellProps {
   user: GitHubUser | null;
@@ -24,8 +25,17 @@ export function AppShell({
   prsCount = 0,
   children,
 }: AppShellProps) {
+  const { theme } = useTheme();
+  const isDiwali = theme === "diwali";
+
   return (
-    <div className="relative flex h-[600px] w-[420px] flex-col overflow-hidden bg-[#090A0F] text-[#FAFAFA] font-sans antialiased">
+    <div
+      className={`relative flex h-[600px] w-[420px] flex-col overflow-hidden text-[#FAFAFA] font-sans antialiased transition-colors duration-200 ${
+        isDiwali
+          ? "theme-diwali bg-[#0B090F]"
+          : "bg-[#090A0F]"
+      }`}
+    >
       {/* Sticky Header */}
       <Header
         user={user}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, Settings, User as UserIcon, LogOut } from "lucide-react";
 import type { GitHubUser } from "../../../lib/github/types";
+import { useTheme } from "../../hooks/useTheme";
 
 interface HeaderProps {
   user: GitHubUser | null;
@@ -17,6 +18,8 @@ export function Header({
 }: HeaderProps) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { theme, toggleTheme } = useTheme();
+  const isDiwali = theme === "diwali";
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -33,7 +36,13 @@ export function Header({
   }, [profileMenuOpen]);
 
   return (
-    <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-[#27272A] bg-[#09090B] px-4">
+    <header
+      className={`relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b px-4 transition-colors duration-200 ${
+        isDiwali
+          ? "border-amber-500/20 bg-[#0e0a12]/95 shadow-[0_4px_16px_rgba(245,158,11,0.04)]"
+          : "border-[#27272A] bg-[#09090B]"
+      }`}
+    >
       {/* Brand Title */}
       <div className="flex items-center gap-2 select-none">
         <img
@@ -41,13 +50,49 @@ export function Header({
           alt="SoloHub"
           className="h-5 w-5 rounded object-contain"
         />
-        <span className="text-sm font-black tracking-wider text-[#FAFAFA]">
-          SOLOHUB
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`text-sm font-black tracking-wider ${
+              isDiwali
+                ? "bg-gradient-to-r from-amber-200 via-amber-300 to-yellow-400 bg-clip-text text-transparent"
+                : "text-[#FAFAFA]"
+            }`}
+          >
+            SOLOHUB
+          </span>
+          {isDiwali && (
+            <span
+              className="text-xs glow-diya-flame animate-diya"
+              title="Diwali Edition"
+            >
+              🪔
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Header Actions */}
       <div className="flex items-center gap-1">
+        {/* Quick Diwali Theme Toggle Pill */}
+        <button
+          type="button"
+          onClick={() => void toggleTheme()}
+          title={
+            isDiwali
+              ? "Diwali Theme Active (Click for Classic Dark)"
+              : "Switch to Festive Diwali Theme"
+          }
+          className={`mr-1 flex h-6.5 items-center gap-1 rounded-full px-2 text-[10px] font-semibold transition-colors cursor-pointer border ${
+            isDiwali
+              ? "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+              : "border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+          }`}
+          aria-label="Toggle theme"
+        >
+          <span className="text-[11px]">{isDiwali ? "🪔" : "🌙"}</span>
+          <span className="leading-none">{isDiwali ? "Diwali" : "Dark"}</span>
+        </button>
+
         {/* Search button with Ctrl+K shortcut */}
         <button
           type="button"
