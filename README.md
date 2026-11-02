@@ -2,6 +2,7 @@
 
 > **A high-productivity GitHub control center for solo developers, built as a Manifest V3 Chrome Extension.**
 
+[![Version](https://img.shields.io/badge/version-v0.2.0-amber.svg)](https://github.com/your-username/solohub/releases)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev/)
 [![Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-green.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
@@ -11,15 +12,30 @@ Solohub puts your GitHub repositories, active pull requests, issues, notificatio
 
 ---
 
+## What's New in v0.2.0 (Diwali & Activity Edition) 🪔
+
+- 🪔 **Festive Diwali Edition Theme**: Warm golden amber aura, animated glowing Diya flame, and interactive one-click theme switcher (`🪔 Diwali` / `🌙 Dark`) in the header and settings.
+- 🎨 **Luminous Extension Icon Glow**: Reimagined extension icons across all resolutions (16px, 32px, 48px, 128px) with warm radiant amber glow, golden Octocat glyph, and flame crown.
+- 📊 **Current-Year Contribution Heatmap**: Authentic 52-week GitHub-style contribution calendar calculating current-year contributions, daily streak counter, and dual color palettes (Diwali Glow & Classic Green).
+- 📰 **GitHub Activity Feed**: Full following and personal event feed featuring release announcements, created repositories, star activity, and forked projects with rich card layouts.
+- 🔔 **In-App Release Update Notifications**: Automatic GitHub Releases update checker with non-intrusive banner notifications, release notes preview, and one-click update actions.
+- 📐 **Standardized 420×600 Viewport**: Unified dimensions across all popup views (Home, Inbox, Repos, Issues, PRs, Exec, Settings) eliminating jumpy layout resizes.
+- ⚡ **Repository Quick Shortcuts**: Convenient top-level shortcuts for `Create Repo`, `Manage Access`, and `Create Issue` on the Repositories page.
+
+---
+
 ## Features
 
 - **Personalized Control Center**: Instant overview of your active repositories, commit activity streaks, pull request velocity, and weekly productivity metrics.
+- **Contribution Heatmap**: 52-week activity calendar showing total contributions for the current year, streak tracking, and customizable color schemes.
+- **GitHub Activity Feed**: Real-time activity feed mirroring GitHub's following stream with rich release cards, star notifications, and fork events.
 - **Repository Management**: Search, filter, and inspect personal and organization repositories. View branch details, collaborator roles, open issues, and pull request counts.
+- **Quick Shortcuts**: Instant shortcuts to create repositories, manage repository collaborator access, file issues, and trigger quick developer actions.
 - **Issue Tracking & Creation**: Browse assigned and open issues across repositories, filter by status, and create new issues with labels and assignees directly from the popup.
 - **Pull Request Monitor**: Track open, draft, and closed PRs across your projects. Inspect review statuses, CI/CD checks, and merge states in real-time.
 - **Action Center / Inbox**: Aggregates actionable items into one high-priority feed: pending review requests, failing CI workflows, unresolved mentions, and stale pull requests.
+- **In-App Update Alerts**: Automatically discovers newer GitHub releases, alerting users in-app with direct release links and changelogs.
 - **Command Palette (`Ctrl+K` / `Cmd+K`)**: Rapid keyboard-driven navigation to search repositories, jump to issues, trigger quick actions, or toggle views without touching the mouse.
-- **Developer Quick Actions**: One-click shortcuts for creating repositories, filing quick issues, inspecting rate-limits, and opening repository web pages.
 - **Dual Authentication Modes**:
   - **Direct PAT (Personal Access Token)**: Zero configuration required. Communicates directly with GitHub's REST API. No backend server needed.
   - **GitHub OAuth 2.0 Flow**: Optional web authentication using a self-hosted companion backend proxy for secure authorization code grant.
@@ -88,9 +104,9 @@ Solohub is distributed via GitHub Releases as an unpacked ZIP archive. It is not
    - Download the latest `solohub-v<version>.zip` and its companion checksum file `solohub-v<version>.zip.sha256`.
 2. **Verify Checksum (Optional but Recommended)**:
    ```bash
-   sha256sum -c solohub-v0.1.0.zip.sha256
+   sha256sum -c solohub-v0.2.0.zip.sha256
    # Or in PowerShell:
-   Get-FileHash -Algorithm SHA256 solohub-v0.1.0.zip
+   Get-FileHash -Algorithm SHA256 solohub-v0.2.0.zip
    ```
 3. **Extract the ZIP Archive**:
    - Extract `solohub-v<version>.zip` into a permanent directory on your computer (e.g., `C:\Extensions\Solohub` or `~/Extensions/Solohub`).
