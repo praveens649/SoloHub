@@ -3,26 +3,31 @@ import { useRepositories } from "../hooks/useRepositories";
 import { useOrganizations } from "../hooks/useOrganizations";
 import { RepositoryCard } from "../components/RepositoryCard";
 import { GitHubRateLimitMessage } from "../components/GitHubRateLimitMessage";
-import { Search, Building2 } from "lucide-react";
+import { Search, Building2, X } from "lucide-react";
 import { CardSkeleton } from "../components/feedback/Skeletons";
 import { getAuth } from "../../lib/storage/auth";
 import type { GitHubRepository } from "../../lib/github/types";
+import { QuickActions, type QuickActionMode } from "../components/QuickActions";
+import { NewIssueForm } from "../components/NewIssueForm";
 
 export type RepoFilter = "all" | "personal" | "orgs" | "public" | "private" | "starred";
 
 interface RepositoriesPageProps {
   autoFocusSearch?: boolean;
   initialFilter?: RepoFilter;
+  initialAction?: QuickActionMode;
 }
 
 export function RepositoriesPage({
   autoFocusSearch = false,
   initialFilter = "all",
+  initialAction = "none",
 }: RepositoriesPageProps) {
   const [filter, setFilter] = useState<RepoFilter>(initialFilter);
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [currentUserLogin, setCurrentUserLogin] = useState<string | null>(null);
+  const [showIssueModal, setShowIssueModal] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -150,6 +155,12 @@ export function RepositoriesPage({
         <p className="text-[11px] text-[#71717A]">Repositories</p>
         <h1 className="text-base font-bold text-[#FAFAFA]">Your Repositories</h1>
       </div>
+
+      {/* Quick Shortcuts on Top of Repo Page (Create Repo, Manage Access, Create Issue) */}
+      <QuickActions
+        initialMode={initialAction}
+        onCreateIssue={() => setShowIssueModal(true)}
+      />
 
       {/* Search Input */}
       <div className="relative">
@@ -309,6 +320,27 @@ export function RepositoriesPage({
               />
             ))
           )}
+        </div>
+      )}
+
+      {/* Create Issue Modal */}
+      {showIssueModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs animate-in fade-in duration-100">
+          <div className="w-full max-w-sm rounded-xl border border-[#27272A] bg-[#0F0F11] p-3 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#27272A] pb-2 mb-3">
+              <h3 className="text-xs font-semibold text-white">
+                Create GitHub Issue
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowIssueModal(false)}
+                className="rounded p-1 text-[#71717A] hover:bg-[#18181B] hover:text-white cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <NewIssueForm onClose={() => setShowIssueModal(false)} />
+          </div>
         </div>
       )}
     </div>

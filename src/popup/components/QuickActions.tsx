@@ -7,6 +7,7 @@ import {
   Globe,
   Lock,
   Users,
+  CircleDot,
 } from "lucide-react";
 import { useCreateRepository } from "../hooks/useRepositories";
 import { useOrganizations } from "../hooks/useOrganizations";
@@ -20,11 +21,13 @@ export type QuickActionMode = "none" | "create-repo" | "manage-access";
 interface QuickActionsProps {
   initialMode?: QuickActionMode;
   onModeChange?: (mode: QuickActionMode) => void;
+  onCreateIssue?: () => void;
 }
 
 export function QuickActions({
   initialMode = "none",
   onModeChange,
+  onCreateIssue,
 }: QuickActionsProps) {
   const [mode, setMode] = useState<QuickActionMode>(initialMode);
   const [name, setName] = useState("");
@@ -148,28 +151,61 @@ export function QuickActions({
 
   return (
     <div className="space-y-3">
-      {/* Mode selection buttons */}
-      {mode === "none" && (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => handleSelectMode("create-repo")}
-            className="flex items-center justify-center gap-2 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs font-medium text-[#FAFAFA] transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
-          >
-            <FolderPlus size={15} className="text-[#A1A1AA]" />
-            <span>Create Repository</span>
-          </button>
+      {/* Quick Shortcut Buttons (Create Repo, Manage Access, Create Issue) */}
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            handleSelectMode(mode === "create-repo" ? "none" : "create-repo")
+          }
+          className={`flex flex-col items-center justify-center rounded-lg border p-2 text-center transition-colors cursor-pointer ${
+            mode === "create-repo"
+              ? "border-zinc-500 bg-[#18181B] text-white shadow-xs"
+              : "border-[#27272A] bg-[#0F0F11] text-[#FAFAFA] hover:border-[#3F3F46] hover:bg-[#18181B]"
+          }`}
+        >
+          <FolderPlus
+            size={15}
+            className={mode === "create-repo" ? "text-emerald-400" : "text-[#A1A1AA]"}
+          />
+          <span className="mt-1.5 text-[11px] font-medium leading-tight">
+            Create Repo
+          </span>
+        </button>
 
-          <button
-            type="button"
-            onClick={() => handleSelectMode("manage-access")}
-            className="flex items-center justify-center gap-2 rounded-lg border border-[#27272A] bg-[#0F0F11] p-3 text-xs font-medium text-[#FAFAFA] transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
-          >
-            <Users size={15} className="text-[#A1A1AA]" />
-            <span>Manage Access</span>
-          </button>
-        </div>
-      )}
+        <button
+          type="button"
+          onClick={() =>
+            handleSelectMode(mode === "manage-access" ? "none" : "manage-access")
+          }
+          className={`flex flex-col items-center justify-center rounded-lg border p-2 text-center transition-colors cursor-pointer ${
+            mode === "manage-access"
+              ? "border-zinc-500 bg-[#18181B] text-white shadow-xs"
+              : "border-[#27272A] bg-[#0F0F11] text-[#FAFAFA] hover:border-[#3F3F46] hover:bg-[#18181B]"
+          }`}
+        >
+          <Users
+            size={15}
+            className={mode === "manage-access" ? "text-indigo-400" : "text-[#A1A1AA]"}
+          />
+          <span className="mt-1.5 text-[11px] font-medium leading-tight">
+            Manage Access
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (onCreateIssue) onCreateIssue();
+          }}
+          className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] text-[#FAFAFA] cursor-pointer"
+        >
+          <CircleDot size={15} className="text-[#A1A1AA]" />
+          <span className="mt-1.5 text-[11px] font-medium leading-tight">
+            Create Issue
+          </span>
+        </button>
+      </div>
 
       {/* Success View for Create Repository */}
       {mode === "create-repo" && createdRepo && (

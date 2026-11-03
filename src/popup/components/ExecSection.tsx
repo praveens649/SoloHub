@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { QuickActions } from "./QuickActions";
 import { ExecNavIcon } from "./Icons";
 import { Terminal, Copy, Check, ExternalLink } from "lucide-react";
 
@@ -38,9 +37,6 @@ export function ExecSection() {
           Execution Center
         </h2>
       </div>
-
-      {/* Embedded QuickActions for creating repo and collaborator management */}
-      <QuickActions />
 
       {/* Terminal Command Runner / Cheatsheet */}
       <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-3.5 backdrop-blur-sm">

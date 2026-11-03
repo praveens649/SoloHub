@@ -1,38 +1,54 @@
-import { useState } from "react";
 import { TodayProductivity } from "../components/TodayProductivity";
 import { ActionCenter } from "../components/ActionCenter";
-import { WeeklyActivity } from "../components/WeeklyActivity";
-import { NewIssueForm } from "../components/NewIssueForm";
+import { ContributionHeatmap } from "../components/ContributionHeatmap";
+import { ActivityFeed } from "../components/ActivityFeed";
+import { ReleaseUpdateChecker } from "../components/ReleaseUpdateChecker";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import type { GitHubUser } from "../../lib/github/types";
 import type { NavPage } from "../components/layout/BottomNav";
-import { FolderPlus, CircleDot, Users, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { useTheme } from "../hooks/useTheme";
 
 interface HomePageProps {
   user: GitHubUser | null;
-  onNavigate: (page: NavPage, state?: { execMode?: "none" | "create-repo" | "manage-access" }) => void;
-  onOpenNewIssue?: () => void;
+  onNavigate: (
+    page: NavPage,
+    state?: {
+      repoAction?: "none" | "create-repo" | "manage-access";
+    }
+  ) => void;
 }
 
-export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
-  const [showIssueModal, setShowIssueModal] = useState(false);
-
-  function handleCreateIssueClick() {
-    if (onOpenNewIssue) {
-      onOpenNewIssue();
-    } else {
-      setShowIssueModal(true);
-    }
-  }
+export function HomePage({ user, onNavigate }: HomePageProps) {
+  const { theme } = useTheme();
+  const isDiwali = theme === "diwali";
 
   return (
     <div className="space-y-4">
+      {/* 0. Solohub Release Update Notification (Conditional) */}
+      <ErrorBoundary>
+        <ReleaseUpdateChecker />
+      </ErrorBoundary>
+
       {/* 1. Compact Welcome / Status Card */}
-      <div className="flex items-center justify-between rounded-lg border border-[#27272A] bg-[#0F0F11] px-3.5 py-2.5">
+      <div
+        className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 transition-colors ${
+          isDiwali
+            ? "border-amber-500/30 bg-gradient-to-r from-[#170E08] via-[#100D15] to-[#0E0A12] shadow-[0_0_15px_rgba(245,158,11,0.06)]"
+            : "border-[#27272A] bg-[#0F0F11]"
+        }`}
+      >
         <div className="min-w-0">
-          <p className="truncate text-xs font-semibold text-[#FAFAFA]">
-            Welcome back, @{user?.login || "developer"}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="truncate text-xs font-semibold text-[#FAFAFA]">
+              Welcome back, @{user?.login || "developer"}
+            </p>
+            {isDiwali && (
+              <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
+                🪔 Diwali Edition
+              </span>
+            )}
+          </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#A1A1AA]">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>GitHub connected</span>
@@ -45,7 +61,12 @@ export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
         <TodayProductivity />
       </ErrorBoundary>
 
-      {/* 3. Action Center Preview (Max 2-3 items + View all →) */}
+      {/* 3. Diwali Contribution Heatmap (Swapped above Action Center) */}
+      <ErrorBoundary>
+        <ContributionHeatmap />
+      </ErrorBoundary>
+
+      {/* 4. Action Center Preview (Max 2-3 items + View all →) */}
       <ErrorBoundary>
         <ActionCenter
           previewLimit={3}
@@ -54,74 +75,25 @@ export function HomePage({ user, onNavigate, onOpenNewIssue }: HomePageProps) {
         />
       </ErrorBoundary>
 
-      {/* 4. Weekly Activity */}
+      {/* 5. Recent GitHub Activity Preview */}
       <ErrorBoundary>
-        <WeeklyActivity />
-      </ErrorBoundary>
-
-      {/* 5. Quick Shortcuts */}
-      <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-[#FAFAFA]">
-          Quick Shortcuts
-        </h2>
-
-        <div className="grid grid-cols-3 gap-2">
-          {/* Create Repository */}
-          <button
-            type="button"
-            onClick={() => onNavigate("exec", { execMode: "create-repo" })}
-            className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2.5 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
-          >
-            <FolderPlus size={15} className="text-[#A1A1AA]" />
-            <span className="mt-1.5 text-[11px] font-medium text-[#FAFAFA] leading-tight">
-              Create Repo
-            </span>
-          </button>
-
-          {/* Create Issue */}
-          <button
-            type="button"
-            onClick={handleCreateIssueClick}
-            className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2.5 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
-          >
-            <CircleDot size={15} className="text-[#A1A1AA]" />
-            <span className="mt-1.5 text-[11px] font-medium text-[#FAFAFA] leading-tight">
-              Create Issue
-            </span>
-          </button>
-
-          {/* Manage Access */}
-          <button
-            type="button"
-            onClick={() => onNavigate("exec", { execMode: "manage-access" })}
-            className="flex flex-col items-center justify-center rounded-lg border border-[#27272A] bg-[#0F0F11] p-2.5 text-center transition-colors hover:border-[#3F3F46] hover:bg-[#18181B] cursor-pointer"
-          >
-            <Users size={15} className="text-[#A1A1AA]" />
-            <span className="mt-1.5 text-[11px] font-medium text-[#FAFAFA] leading-tight">
-              Manage Access
-            </span>
-          </button>
-        </div>
-      </section>
-
-      {/* Quick Create Issue Modal */}
-      {showIssueModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs animate-in fade-in duration-100">
-          <div className="w-full max-w-sm rounded-xl border border-[#27272A] bg-[#0F0F11] p-3 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#27272A] pb-2 mb-3">
-              <h3 className="text-xs font-semibold text-white">Create GitHub Issue</h3>
-              <button
-                type="button"
-                onClick={() => setShowIssueModal(false)}
-                className="rounded p-1 text-[#71717A] hover:bg-[#18181B] hover:text-white"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <NewIssueForm onClose={() => setShowIssueModal(false)} />
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-[#FAFAFA]">
+              Recent Activity
+            </h2>
+            <button
+              type="button"
+              onClick={() => onNavigate("inbox")}
+              className="flex items-center gap-1 text-[11px] text-[#A1A1AA] hover:text-white transition-colors cursor-pointer"
+            >
+              <span>View full feed</span>
+              <ArrowRight size={11} />
+            </button>
           </div>
-        </div>
-      )}
+          <ActivityFeed limit={3} showHeader={false} compact={true} />
+        </section>
+      </ErrorBoundary>
     </div>
   );
 }

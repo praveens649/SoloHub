@@ -10,15 +10,30 @@
     box-sizing: border-box;
   }
 
+  html,
   body {
     margin: 0;
-    min-width: 380px;
-    width: 100%;
-    min-height: 580px;
+    padding: 0;
+    width: 420px;
+    height: 600px;
+    min-width: 420px;
+    max-width: 420px;
+    min-height: 600px;
+    max-height: 600px;
     background-color: #090a0f;
     color: #f4f4f5;
     font-family: var(--font-sans);
-    overflow-x: hidden;
+    overflow: hidden;
+  }
+
+  #root {
+    width: 420px;
+    height: 600px;
+    min-width: 420px;
+    max-width: 420px;
+    min-height: 600px;
+    max-height: 600px;
+    overflow: hidden;
   }
 
   /* Custom sleek dark scrollbar */
@@ -48,4 +63,37 @@
 
 .glow-subtle {
   box-shadow: 0 0 20px -2px rgba(255, 255, 255, 0.05);
+}
+
+/* Diwali Festive Theme Utilities */
+.theme-diwali {
+  background: radial-gradient(
+    circle at 50% -5%,
+    rgba(245, 158, 11, 0.1) 0%,
+    rgba(234, 88, 12, 0.03) 30%,
+    #09090D 100%
+  );
+}
+
+.glow-diwali {
+  box-shadow: 0 0 25px -4px rgba(245, 158, 11, 0.16);
+}
+
+.glow-diya-flame {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+}
+
+@keyframes diya-glow-pulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.animate-diya {
+  animation: diya-glow-pulse 3s ease-in-out infinite;
 }

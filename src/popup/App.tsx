@@ -18,6 +18,7 @@ import { useIssues } from "./hooks/useIssues";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { FeedbackProvider } from "./components/feedback/ToastContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,7 @@ function App() {
   const [newIssueModalOpen, setNewIssueModalOpen] = useState(false);
   const [reposFocusSearch, setReposFocusSearch] = useState(false);
   const [reposInitialFilter, setReposInitialFilter] = useState<RepoFilter>("all");
-  const [execInitialMode, setExecInitialMode] = useState<"none" | "create-repo" | "manage-access">("none");
+  const [repoInitialAction, setRepoInitialAction] = useState<"none" | "create-repo" | "manage-access">("none");
 
   const queryClient = useQueryClient();
 
@@ -131,15 +132,15 @@ function App() {
   function handleNavigate(
     page: NavPage,
     state?: {
-      execMode?: "none" | "create-repo" | "manage-access";
+      repoAction?: "none" | "create-repo" | "manage-access";
       focusSearch?: boolean;
       repoFilter?: RepoFilter;
     }
   ) {
-    if (state?.execMode) {
-      setExecInitialMode(state.execMode);
+    if (state?.repoAction) {
+      setRepoInitialAction(state.repoAction);
     } else {
-      setExecInitialMode("none");
+      setRepoInitialAction("none");
     }
 
     if (state?.focusSearch) {
@@ -160,91 +161,97 @@ function App() {
   // 1. Initial Loading State
   if (loading) {
     return (
-      <div className="flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col items-center justify-center bg-[#090A0F] text-[#FAFAFA]">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#27272A] border-t-white" />
-        <p className="mt-3 text-xs text-[#71717A]">Checking connection...</p>
-      </div>
+      <ThemeProvider>
+        <div className="flex h-[600px] w-[420px] flex-col items-center justify-center bg-[#090A0F] text-[#FAFAFA]">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-500/40 border-t-amber-400" />
+          <p className="mt-3 text-xs text-[#71717A]">Checking connection...</p>
+        </div>
+      </ThemeProvider>
     );
   }
 
   // 2. Unauthenticated Experience (Separate Hero screen)
   if (!authenticated) {
     return (
-      <div className="flex h-[600px] w-full min-w-[380px] max-w-[420px] mx-auto flex-col bg-[#090A0F]">
-        <HomeHero onSuccess={handleLoginSuccess} />
-      </div>
+      <ThemeProvider>
+        <div className="flex h-[600px] w-[420px] flex-col overflow-hidden bg-[#090A0F]">
+          <HomeHero onSuccess={handleLoginSuccess} />
+        </div>
+      </ThemeProvider>
     );
   }
 
   // 3. Authenticated App Experience (AppShell + Pages + BottomNav + Command Palette)
   return (
-    <FeedbackProvider>
-      <AppShell
-        user={user}
-        currentPage={currentPage}
-        onSelectPage={(page) => handleNavigate(page)}
-        onOpenSearch={() => setCommandPaletteOpen((prev) => !prev)}
-        onDisconnect={handleDisconnect}
-        inboxCount={inboxCount}
-        prsCount={prsCount}
-      >
-        {currentPage === "home" && (
-          <HomePage
-            user={user}
-            onNavigate={handleNavigate}
-            onOpenNewIssue={() => setNewIssueModalOpen(true)}
-          />
-        )}
+    <ThemeProvider>
+      <FeedbackProvider>
+        <AppShell
+          user={user}
+          currentPage={currentPage}
+          onSelectPage={(page) => handleNavigate(page)}
+          onOpenSearch={() => setCommandPaletteOpen((prev) => !prev)}
+          onDisconnect={handleDisconnect}
+          inboxCount={inboxCount}
+          prsCount={prsCount}
+        >
+          {currentPage === "home" && (
+            <HomePage
+              user={user}
+              onNavigate={handleNavigate}
+            />
+          )}
 
-        {currentPage === "inbox" && <InboxPage />}
+          {currentPage === "inbox" && <InboxPage />}
 
-        {currentPage === "prs" && <PullRequestsPage />}
+          {currentPage === "prs" && <PullRequestsPage />}
 
-        {currentPage === "repos" && (
-          <RepositoriesPage
-            autoFocusSearch={reposFocusSearch}
-            initialFilter={reposInitialFilter}
-          />
-        )}
+          {currentPage === "repos" && (
+            <RepositoriesPage
+              autoFocusSearch={reposFocusSearch}
+              initialFilter={reposInitialFilter}
+              initialAction={repoInitialAction}
+            />
+          )}
 
-        {currentPage === "exec" && <ExecPage initialMode={execInitialMode} />}
+          {currentPage === "exec" && <ExecPage />}
 
-        {currentPage === "settings" && (
-          <SettingsPage
-            user={user}
-            onBack={() => setCurrentPage("home")}
-            onDisconnect={handleDisconnect}
-          />
-        )}
-      </AppShell>
+          {currentPage === "settings" && (
+            <SettingsPage
+              user={user}
+              onBack={() => setCurrentPage("home")}
+              onDisconnect={handleDisconnect}
+            />
+          )}
+        </AppShell>
 
-      {/* Global Command Palette */}
-      <CommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        onNavigate={handleNavigate}
-        onOpenNewIssue={() => setNewIssueModalOpen(true)}
-      />
+        {/* Global Command Palette */}
+        <CommandPalette
+          isOpen={commandPaletteOpen}
+          onClose={() => setCommandPaletteOpen(false)}
+          onNavigate={handleNavigate}
+          onOpenNewIssue={() => setNewIssueModalOpen(true)}
+        />
 
-      {/* Global New Issue Modal */}
-      {newIssueModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs animate-in fade-in duration-100">
-          <div className="w-full max-w-sm rounded-xl border border-[#27272A] bg-[#0F0F11] p-3 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#27272A] pb-2 mb-3">
-              <h3 className="text-xs font-semibold text-white">Create GitHub Issue</h3>
-              <button
-                type="button"
-                onClick={() => setNewIssueModalOpen(false)}
-                className="rounded p-1 text-[#71717A] hover:bg-[#18181B] hover:text-white cursor-pointer"
-              >
-                <X size={14} />
-              </button>
+        {/* Global New Issue Modal */}
+        {newIssueModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs animate-in fade-in duration-100">
+            <div className="w-full max-w-sm rounded-xl border border-[#27272A] bg-[#0F0F11] p-3 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-[#27272A] pb-2 mb-3">
+                <h3 className="text-xs font-semibold text-white">Create GitHub Issue</h3>
+                <button
+                  type="button"
+                  onClick={() => setNewIssueModalOpen(false)}
+                  className="rounded p-1 text-[#71717A] hover:bg-[#18181B] hover:text-white cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <NewIssueForm onClose={() => setNewIssueModalOpen(false)} />
             </div>
-            <NewIssueForm onClose={() => setNewIssueModalOpen(false)} />
           </div>
-        </div>
-      )}
-    </FeedbackProvider>
+        )}
+      </FeedbackProvider>
+    </ThemeProvider>
   );
 }
 
